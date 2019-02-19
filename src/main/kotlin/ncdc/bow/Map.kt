@@ -4,7 +4,7 @@ import org.newdawn.slick.util.pathfinding.PathFindingContext
 import org.newdawn.slick.util.pathfinding.TileBasedMap
 import org.springframework.web.client.RestTemplate
 
-//Data is transposed representation of map. This is list of rows, that are lists of cells.
+//Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.
 class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 {
 	companion object
@@ -30,13 +30,12 @@ class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 
 	enum class Cell(val walkable: Boolean)
 	{
-		A(true),
-		B(true),
-		C(false),
-		D(false),
-		E(false),
-		F(false),
-		G(false)
+		DIRT(true),
+		GRASS(true),
+		WATER(false),
+		ROCK(false),
+		BASE(false),
+		MINE(false)
 	}
 
 	operator fun get(x: Int, y: Int) = data[y][x]
