@@ -7,6 +7,16 @@ import org.springframework.web.client.RestTemplate
 //Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.
 class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 {
+	enum class Cell(val walkable: Boolean)
+	{
+		DIRT(true),
+		GRASS(true),
+		WATER(false),
+		ROCK(false),
+		BASE(false),
+		MINE(false)
+	}
+
 	companion object
 	{
 		private const val ENDPOINT = "http://bow.westeurope.cloudapp.azure.com:8080/getMap"
@@ -18,7 +28,7 @@ class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 					?: throw APIException("Cannot fetch map.")
 			if(!dataArray.ensureSize()) throw APIException("Invalid data")
 
-			val dataList = dataArray.convertToList().reversed()
+			val dataList = dataArray.convertToList()
 			return Map(dataList)
 		}
 
@@ -26,16 +36,6 @@ class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 		private fun Array<Array<Cell>>.ensureSize() = !this.isEmpty() && this.map { it.size }.distinct().size == 1
 
 		private fun Array<Array<Cell>>.convertToList() = this.map { it.toList() }
-	}
-
-	enum class Cell(val walkable: Boolean)
-	{
-		DIRT(true),
-		GRASS(true),
-		WATER(false),
-		ROCK(false),
-		BASE(false),
-		MINE(false)
 	}
 
 	operator fun get(x: Int, y: Int) = data[y][x]

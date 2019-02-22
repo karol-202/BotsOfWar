@@ -2,7 +2,7 @@ package ncdc.bow
 
 import org.newdawn.slick.util.pathfinding.Path
 
-class MoveSequence private constructor(val moves: List<Direction>)
+class MoveSequence private constructor(val steps: List<Direction>)
 {
 	companion object
 	{
