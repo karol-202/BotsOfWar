@@ -1,11 +1,12 @@
-package ncdc.bow
+package ncdc.bow.model
 
+import ncdc.bow.APIException
 import org.newdawn.slick.util.pathfinding.PathFindingContext
 import org.newdawn.slick.util.pathfinding.TileBasedMap
 import org.springframework.web.client.RestTemplate
 
 //Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.
-class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
+class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
 {
 	enum class Cell(val walkable: Boolean)
 	{
@@ -21,7 +22,7 @@ class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 	{
 		private const val ENDPOINT = "http://bow.westeurope.cloudapp.azure.com:8080/getMap"
 
-		fun fromServer(): Map
+		fun fromServer(): GameMap
 		{
 			val template = RestTemplate()
 			val dataArray = template.getForObject(ENDPOINT, Array<Array<Cell>>::class.java)
@@ -29,7 +30,7 @@ class Map private constructor(val data: List<List<Cell>>) : TileBasedMap
 			if(!dataArray.ensureSize()) throw APIException("Invalid data")
 
 			val dataList = dataArray.convertToList()
-			return Map(dataList)
+			return GameMap(dataList)
 		}
 
 		//Checks if the list is not empty and if all rows have equal size

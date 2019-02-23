@@ -1,4 +1,4 @@
-package ncdc.bow
+package ncdc.bow.model
 
 //Server system: (0, 0) in left bottom corner
 data class ServerPosition(val x: Int = 0,

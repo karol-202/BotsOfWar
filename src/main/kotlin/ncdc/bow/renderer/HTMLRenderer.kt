@@ -1,7 +1,10 @@
-package ncdc.bow
+package ncdc.bow.renderer
 
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
+import ncdc.bow.model.Entity
+import ncdc.bow.model.GameMap
+import ncdc.bow.model.LocalPosition
 import org.newdawn.slick.util.pathfinding.Path
 import java.io.File
 import java.io.Writer
@@ -15,7 +18,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 
 	constructor(file: File): this(file.bufferedWriter())
 
-	override fun render(map: Map, path: Path?, coordinates: List<LocalPosition>?, entities: List<Entity>?)
+	override fun render(gameMap: GameMap, path: Path?, coordinates: List<LocalPosition>?, entities: List<Entity>?)
 	{
 		writer.appendHTML().html {
 			head {
@@ -23,7 +26,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 			}
 			body {
 				table {
-					map.data.forEachIndexed { y, row ->
+					gameMap.data.forEachIndexed { y, row ->
 						tr {
 							row.forEachIndexed { x, cell ->
 								td {
@@ -44,16 +47,16 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 		}.flush()
 	}
 
-	private fun FlowContent.renderCell(cell: Map.Cell, isPath: Boolean, isCoordinate: Boolean, entities: List<Entity>)
+	private fun FlowContent.renderCell(cell: GameMap.Cell, isPath: Boolean, isCoordinate: Boolean, entities: List<Entity>)
 	{
-		fun Map.Cell.getImage() = when(this)
+		fun GameMap.Cell.getImage() = when(this)
 		{
-			Map.Cell.DIRT -> "../../src/main/resources/tiles/dirt.png"
-			Map.Cell.GRASS -> "../../src/main/resources/tiles/grass.png"
-			Map.Cell.WATER -> "../../src/main/resources/tiles/water.png"
-			Map.Cell.ROCK -> "../../src/main/resources/tiles/rock.png"
-			Map.Cell.BASE -> "../../src/main/resources/tiles/base.png"
-			Map.Cell.MINE -> "../../src/main/resources/tiles/mine.png"
+			GameMap.Cell.DIRT -> "../../src/main/resources/tiles/dirt.png"
+			GameMap.Cell.GRASS -> "../../src/main/resources/tiles/grass.png"
+			GameMap.Cell.WATER -> "../../src/main/resources/tiles/water.png"
+			GameMap.Cell.ROCK -> "../../src/main/resources/tiles/rock.png"
+			GameMap.Cell.BASE -> "../../src/main/resources/tiles/base.png"
+			GameMap.Cell.MINE -> "../../src/main/resources/tiles/mine.png"
 		}
 
 		div {
@@ -79,12 +82,11 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 			Entity.Type.ARCHER -> "../../src/main/resources/entities/archer.png"
 			Entity.Type.WORKER -> "../../src/main/resources/entities/worker.png"
 			Entity.Type.WARRIOR -> "../../src/main/resources/entities/warrior.png"
-			else -> ""
 		}
 
 		fun entity(entity: Entity, size: Int)
 		{
-			img(entity.type?.name, entity.getImage()) {
+			img(entity.type.name, entity.getImage()) {
 				positionAndSize(size, size, 0, 0)
 			}
 		}

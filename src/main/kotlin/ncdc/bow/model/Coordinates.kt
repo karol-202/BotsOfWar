@@ -1,5 +1,6 @@
-package ncdc.bow
+package ncdc.bow.model
 
+import ncdc.bow.APIException
 import org.springframework.web.client.RestTemplate
 
 object Coordinates
