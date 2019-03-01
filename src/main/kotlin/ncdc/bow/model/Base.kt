@@ -1,10 +1,12 @@
 package ncdc.bow.model
 
-data class Base(val position: LocalPosition,
+import ncdc.bow.World
+
+data class Base(val id: String,
+                val owner: Owner,
+                val position: LocalPosition,
                 val hp: Int,
-                val id: String,
-                val newEntity: Entity?,
-                val owner: Owner)
+                val newEntity: Entity?)
 {
 	data class BaseData(val coordinates: ServerPosition? = null,
 	                    val hp: Int = 0,
@@ -12,6 +14,6 @@ data class Base(val position: LocalPosition,
 	                    val newUnit: Entity.EntityData? = null,
 	                    val owner: Owner? = null)
 	{
-		fun toBase(world: World) = Base(coordinates!!.toLocalSystem(world), hp, id!!, newUnit?.toEntity(world), owner!!)
+		fun toBase(world: World) = Base(id!!, owner!!, coordinates!!.toLocalSystem(world), hp, newUnit?.toEntity(world))
 	}
 }

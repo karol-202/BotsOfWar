@@ -1,8 +1,8 @@
 package ncdc.bow.model
 
-data class Action(val type: Type,
-                  val id: String,
-                  val target: String)
+data class Action(val id: String, //Id of entity or base
+                  val type: Type,
+                  val target: String) //Id of entity, move direction or entity to recruit
 {
 	enum class Type
 	{
@@ -10,9 +10,9 @@ data class Action(val type: Type,
 	}
 
 	data class ActionData(val actionType: Action.Type? = null,
-	                              val id: String? = null,
-	                              val target: String? = null)
+	                      val id: String? = null,
+	                      val target: String? = null)
 	{
-		fun toAction() = Action(actionType!!, id!!, target!!)
+		fun toAction() = Action(id!!, actionType!!, target!!)
 	}
 }

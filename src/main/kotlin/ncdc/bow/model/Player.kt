@@ -1,10 +1,12 @@
 package ncdc.bow.model
 
-data class Player(val active: Boolean,
+import ncdc.bow.World
+
+data class Player(val id: Int,
+                  val owner: Owner,
+                  val active: Boolean,
                   val base: Base,
                   val gold: Int,
-                  val id: Int,
-                  val owner: Owner,
                   val entities: List<Entity>)
 {
 	data class PlayerData(val active: Boolean = false,
@@ -14,6 +16,7 @@ data class Player(val active: Boolean,
 	                      val owner: Owner? = null,
 	                      val units: List<Entity.EntityData>? = null)
 	{
-		fun toPlayer(world: World) = Player(active, base!!.toBase(world), gold, id, owner!!, units!!.map { it.toEntity(world) })
+		fun toPlayer(world: World) =
+				Player(id, owner!!, active, base!!.toBase(world), gold, units!!.map { it.toEntity(world) })
 	}
 }

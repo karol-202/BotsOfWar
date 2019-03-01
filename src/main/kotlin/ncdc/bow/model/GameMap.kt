@@ -20,12 +20,10 @@ class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
 
 	companion object
 	{
-		private const val ENDPOINT = "http://bow.westeurope.cloudapp.azure.com:8080/getMap"
-
-		fun fromServer(): GameMap
+		fun fromServer(endpoint: String): GameMap
 		{
 			val template = RestTemplate()
-			val dataArray = template.getForObject(ENDPOINT, Array<Array<Cell>>::class.java)
+			val dataArray = template.getForObject(endpoint, Array<Array<Cell>>::class.java)
 					?: throw APIException("Cannot fetch map.")
 			if(!dataArray.ensureSize()) throw APIException("Invalid data")
 

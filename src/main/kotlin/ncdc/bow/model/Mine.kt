@@ -1,10 +1,12 @@
 package ncdc.bow.model
 
-data class Mine(val position: LocalPosition,
-                val goldLeft: Int,
-                val id: String,
-                val miningPerWorker: Int,
+import ncdc.bow.World
+
+data class Mine(val id: String,
                 val owner: Owner,
+                val position: LocalPosition,
+                val goldLeft: Int,
+                val miningPerWorker: Int,
                 val workersNumber: Int)
 {
 	data class MineData(val coordinates: ServerPosition? = null,
@@ -14,6 +16,7 @@ data class Mine(val position: LocalPosition,
 	                    val owner: Owner? = null,
 	                    val workersNumber: Int = 0)
 	{
-		fun toMine(world: World) = Mine(coordinates!!.toLocalSystem(world), goldLeft, id!!, miningPerWorker, owner!!, workersNumber)
+		fun toMine(world: World) =
+				Mine(id!!, owner!!, coordinates!!.toLocalSystem(world), goldLeft, miningPerWorker, workersNumber)
 	}
 }

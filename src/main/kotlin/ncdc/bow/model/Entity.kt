@@ -1,15 +1,14 @@
 package ncdc.bow.model
 
-import ncdc.bow.APIException
-import org.springframework.web.client.RestTemplate
+import ncdc.bow.World
 
 data class Entity(val id: String,
-                  val position: LocalPosition?,
-                  val owner: Owner?, //Consider making owner non-null
-                  val hp: Int,
+                  val owner: Owner?,
                   val type: Type,
-                  val rangeOfAttack: Int,
+                  val position: LocalPosition,
+                  val hp: Int,
                   val actionPoints: Int,
+                  val rangeOfAttack: Int,
                   val damage: Int,
                   val cost: Int,
                   val entrench: Boolean)
@@ -33,15 +32,8 @@ data class Entity(val id: String,
 	                      val cost: Int = 0,
 	                      val entrench: Boolean = false)
 	{
-		fun toEntity(world: World) = Entity(id, coordinates?.toLocalSystem(world), owner, hp, name!!, rangeOfAttack, actionPoints, damage, cost, entrench)
-	}
-
-	companion object
-	{
-		private const val ENDPOINT = "http://bow.westeurope.cloudapp.azure.com:8080/getUnitList"
-
-		fun allFromServer(world: World) =
-				RestTemplate().getForObject(ENDPOINT, Array<EntityData>::class.java)?.map { it.toEntity(world) }
-						?: throw APIException("Cannot fetch entities")
+		fun toEntity(world: World) =
+				Entity(id, owner, name!!, coordinates?.toLocalSystem(world) ?: LocalPosition(),
+				       hp, actionPoints, rangeOfAttack, damage, cost, entrench)
 	}
 }

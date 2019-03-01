@@ -1,5 +1,6 @@
 package ncdc.bow.model
 
+import ncdc.bow.World
 import org.springframework.web.client.RestTemplate
 
 data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,

@@ -2,10 +2,11 @@ package ncdc.bow.renderer
 
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
+import ncdc.bow.World
 import ncdc.bow.model.Entity
 import ncdc.bow.model.GameMap
 import ncdc.bow.model.LocalPosition
-import org.newdawn.slick.util.pathfinding.Path
+import ncdc.bow.model.Owner
 import java.io.File
 import java.io.Writer
 
@@ -16,9 +17,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 		bufferedWriter()
 	})
 
-	constructor(file: File): this(file.bufferedWriter())
-
-	override fun render(gameMap: GameMap, path: Path?, coordinates: List<LocalPosition>?, entities: List<Entity>?)
+	override fun render(world: World)
 	{
 		writer.appendHTML().html {
 			head {
@@ -26,18 +25,17 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 			}
 			body {
 				table {
-					gameMap.data.forEachIndexed { y, row ->
+					val allEntities = world.gameState.player1.entities + world.gameState.player2.entities
+					world.gameMap.data.forEachIndexed { y, row ->
 						tr {
 							row.forEachIndexed { x, cell ->
 								td {
 									style = "padding: 0;"
 
 									val position = LocalPosition(x, y)
-									val isPath = path?.contains(x, y) == true
-									val isCoordinate = coordinates?.contains(position) == true
-									val entity = entities?.filter { it.position == position } ?: emptyList()
+									val entities = allEntities.filter { it.position == position }
 
-									renderCell(cell, isPath, isCoordinate, entity)
+									renderCell(cell, entities)
 								}
 							}
 						}
@@ -47,7 +45,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 		}.flush()
 	}
 
-	private fun FlowContent.renderCell(cell: GameMap.Cell, isPath: Boolean, isCoordinate: Boolean, entities: List<Entity>)
+	private fun FlowContent.renderCell(cell: GameMap.Cell, entities: List<Entity>)
 	{
 		fun GameMap.Cell.getImage() = when(this)
 		{
@@ -64,12 +62,6 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 			img(cell.name, cell.getImage()) {
 				positionAndSize(48, 48)
 			}
-			if(isPath) img("PATH", "../../src/main/resources/path.png") {
-				positionAndSize(48, 48)
-			}
-			if(isCoordinate) img("COORD", "../../src/main/resources/coord.png") {
-				positionAndSize(48, 48)
-			}
 			if(entities.isNotEmpty()) renderEntities(entities)
 		}
 	}
@@ -78,10 +70,14 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 	{
 		fun Entity.getImage() = when(type)
 		{
-			Entity.Type.HORSE -> "../../src/main/resources/entities/horse.png"
-			Entity.Type.ARCHER -> "../../src/main/resources/entities/archer.png"
-			Entity.Type.WORKER -> "../../src/main/resources/entities/worker.png"
-			Entity.Type.WARRIOR -> "../../src/main/resources/entities/warrior.png"
+			Entity.Type.HORSE -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/horse_red.png"
+								  else "../../src/main/resources/entities/horse_blue.png"
+			Entity.Type.ARCHER -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/archer_red.png"
+								   else "../../src/main/resources/entities/archer_blue.png"
+			Entity.Type.WORKER -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/worker_red.png"
+								   else "../../src/main/resources/entities/worker_blue.png"
+			Entity.Type.WARRIOR -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/warrior_red.png"
+									else "../../src/main/resources/entities/warrior_blue.png"
 		}
 
 		fun entity(entity: Entity, size: Int)
@@ -113,6 +109,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 					}
 				}
 			}
+			else -> println("Could not display entities: ${entities.size}")
 		}
 	}
 

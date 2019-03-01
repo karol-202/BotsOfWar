@@ -1,27 +1,25 @@
 package ncdc.bow.renderer
 
-import ncdc.bow.model.Entity
+import ncdc.bow.World
 import ncdc.bow.model.GameMap
 import ncdc.bow.model.LocalPosition
-import org.newdawn.slick.util.pathfinding.Path
 
 class ConsoleRenderer : Renderer
 {
-	override fun render(gameMap: GameMap, path: Path?, coordinates: List<LocalPosition>?, entities: List<Entity>?)
+	override fun render(world: World)
 	{
-		gameMap.data.forEachIndexed { y, column ->
+		world.gameMap.data.forEachIndexed { y, column ->
 			column.forEachIndexed { x, cell ->
-				val position = LocalPosition(x, y)
-
-				when
-				{
-					path?.contains(x, y) == true -> print("# ")
-					coordinates?.contains(position) == true -> print("6 ")
-					entities?.any { it.position == position } == true -> print("7 ")
-					else -> print("${cell.ordinal} ")
-				}
+				renderCell(world, LocalPosition(x, y), cell)
 			}
 			println()
 		}
+	}
+
+	private fun renderCell(world: World, position: LocalPosition, cell: GameMap.Cell) = when
+	{
+		world.gameState.player1.entities.any { it.position == position } -> print("6 ")
+		world.gameState.player2.entities.any { it.position == position } -> print("7 ")
+		else -> print("${cell.ordinal} ")
 	}
 }
