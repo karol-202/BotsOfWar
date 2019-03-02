@@ -1,22 +1,26 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.World
+import pl.karol202.bow.game.Game
 
 data class Player(val id: Int,
-                  val owner: Owner,
+                  val side: Side,
                   val active: Boolean,
                   val base: Base,
                   val gold: Int,
                   val entities: List<Entity>)
 {
+	enum class Side
+	{
+		PLAYER1, PLAYER2
+	}
+
 	data class PlayerData(val active: Boolean = false,
 	                      val base: Base.BaseData? = null,
 	                      val gold: Int = 0,
 	                      val id: Int = 0,
-	                      val owner: Owner? = null,
+	                      val side: Side? = null,
 	                      val units: List<Entity.EntityData>? = null)
 	{
-		fun toPlayer(world: World) =
-				Player(id, owner!!, active, base!!.toBase(world), gold, units!!.map { it.toEntity(world) })
+		fun toPlayer(game: Game) = Player(id, side!!, active, base!!.toBase(game), gold, units!!.map { it.toEntity(game) })
 	}
 }

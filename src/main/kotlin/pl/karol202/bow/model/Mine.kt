@@ -1,6 +1,6 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.World
+import pl.karol202.bow.game.Game
 
 data class Mine(val id: String,
                 val owner: Owner,
@@ -9,6 +9,11 @@ data class Mine(val id: String,
                 val miningPerWorker: Int,
                 val workersNumber: Int)
 {
+	enum class Owner
+	{
+		PLAYER1, PLAYER2, NEUTRAL
+	}
+
 	data class MineData(val coordinates: ServerPosition? = null,
 	                    val goldLeft: Int = 0,
 	                    val id: String? = null,
@@ -16,7 +21,6 @@ data class Mine(val id: String,
 	                    val owner: Owner? = null,
 	                    val workersNumber: Int = 0)
 	{
-		fun toMine(world: World) =
-				Mine(id!!, owner!!, coordinates!!.toLocalSystem(world), goldLeft, miningPerWorker, workersNumber)
+		fun toMine(game: Game) = Mine(id!!, owner!!, coordinates!!.toLocalSystem(game), goldLeft, miningPerWorker, workersNumber)
 	}
 }

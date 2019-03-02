@@ -1,6 +1,6 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.World
+import pl.karol202.bow.game.Game
 
 data class GameState(val gameId: Int,
                      val tournamentId: Int,
@@ -24,9 +24,6 @@ data class GameState(val gameId: Int,
 	                         val player2: Player.PlayerData? = null,
 	                         val tournamentId: Int = 0)
 	{
-		fun toGameState(world: World) =
-				GameState(gameId, tournamentId, currentTurn, currentStep, mapPath!!,
-				          mines!!.map { it.toMine(world) }, player1!!.toPlayer(world), player2!!.toPlayer(world),
-				          lastActions!!.map { it.toAction() }, lastLogs!!)
+		fun toGameState(game: Game) = GameState(gameId, tournamentId, currentTurn, currentStep, mapPath!!, mines!!.map { it.toMine(game) }, player1!!.toPlayer(game), player2!!.toPlayer(game), lastActions!!.map { it.toAction() }, lastLogs!!)
 	}
 }

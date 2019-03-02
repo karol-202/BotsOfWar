@@ -1,12 +1,12 @@
-package ncdc.bow.renderer
+package pl.karol202.bow.renderer
 
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
-import ncdc.bow.World
-import ncdc.bow.model.Entity
-import ncdc.bow.model.GameMap
-import ncdc.bow.model.LocalPosition
-import ncdc.bow.model.Owner
+import pl.karol202.bow.game.Game
+import pl.karol202.bow.model.Entity
+import pl.karol202.bow.model.GameMap
+import pl.karol202.bow.model.LocalPosition
+import pl.karol202.bow.model.Player
 import java.io.File
 import java.io.Writer
 
@@ -17,7 +17,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 		bufferedWriter()
 	})
 
-	override fun render(world: World)
+	override fun render(game: Game)
 	{
 		writer.appendHTML().html {
 			head {
@@ -25,15 +25,14 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 			}
 			body {
 				table {
-					val allEntities = world.gameState.player1.entities + world.gameState.player2.entities
-					world.gameMap.data.forEachIndexed { y, row ->
+					game.gameMap.data.forEachIndexed { y, row ->
 						tr {
 							row.forEachIndexed { x, cell ->
 								td {
 									style = "padding: 0;"
 
 									val position = LocalPosition(x, y)
-									val entities = allEntities.filter { it.position == position }
+									val entities = game.entities.filter { it.position == position }
 
 									renderCell(cell, entities)
 								}
@@ -70,13 +69,13 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 	{
 		fun Entity.getImage() = when(type)
 		{
-			Entity.Type.HORSE -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/horse_red.png"
+			Entity.Type.HORSE -> if(owner == Player.Side.PLAYER1) "../../src/main/resources/entities/horse_red.png"
 								  else "../../src/main/resources/entities/horse_blue.png"
-			Entity.Type.ARCHER -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/archer_red.png"
+			Entity.Type.ARCHER -> if(owner == Player.Side.PLAYER1) "../../src/main/resources/entities/archer_red.png"
 								   else "../../src/main/resources/entities/archer_blue.png"
-			Entity.Type.WORKER -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/worker_red.png"
+			Entity.Type.WORKER -> if(owner == Player.Side.PLAYER1) "../../src/main/resources/entities/worker_red.png"
 								   else "../../src/main/resources/entities/worker_blue.png"
-			Entity.Type.WARRIOR -> if(owner == Owner.PLAYER1) "../../src/main/resources/entities/warrior_red.png"
+			Entity.Type.WARRIOR -> if(owner == Player.Side.PLAYER1) "../../src/main/resources/entities/warrior_red.png"
 									else "../../src/main/resources/entities/warrior_blue.png"
 		}
 

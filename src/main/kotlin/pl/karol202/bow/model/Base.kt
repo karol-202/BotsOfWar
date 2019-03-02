@@ -1,9 +1,9 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.World
+import pl.karol202.bow.game.Game
 
 data class Base(val id: String,
-                val owner: Owner,
+                val owner: Player.Side,
                 val position: LocalPosition,
                 val hp: Int,
                 val newEntity: Entity?)
@@ -12,8 +12,8 @@ data class Base(val id: String,
 	                    val hp: Int = 0,
 	                    val id: String? = null,
 	                    val newUnit: Entity.EntityData? = null,
-	                    val owner: Owner? = null)
+	                    val owner: Player.Side? = null)
 	{
-		fun toBase(world: World) = Base(id!!, owner!!, coordinates!!.toLocalSystem(world), hp, newUnit?.toEntity(world))
+		fun toBase(game: Game) = Base(id!!, owner!!, coordinates!!.toLocalSystem(game), hp, newUnit?.toEntity(game))
 	}
 }

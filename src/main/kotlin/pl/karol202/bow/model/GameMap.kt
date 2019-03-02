@@ -1,6 +1,6 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.APIException
+import pl.karol202.bow.APIException
 import org.newdawn.slick.util.pathfinding.PathFindingContext
 import org.newdawn.slick.util.pathfinding.TileBasedMap
 import org.springframework.web.client.RestTemplate

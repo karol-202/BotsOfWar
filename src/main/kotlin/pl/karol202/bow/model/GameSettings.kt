@@ -1,6 +1,6 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.World
+import pl.karol202.bow.game.Game
 import org.springframework.web.client.RestTemplate
 
 data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
@@ -14,18 +14,14 @@ data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
 	                                    val miningPerTurn: Int = 0,
 	                                    val numberOfResources: Int = 0)
 	{
-		fun toGameSettings(world: World) =
-				GameSettings(mapOf(Entity.Type.ARCHER to archer!!.toEntity(world),
-				                   Entity.Type.HORSE to horse!!.toEntity(world),
-				                   Entity.Type.WARRIOR to warrior!!.toEntity(world),
-				                   Entity.Type.WORKER to worker!!.toEntity(world)), miningPerTurn, numberOfResources)
+		fun toGameSettings(game: Game) = GameSettings(mapOf(Entity.Type.ARCHER to archer!!.toEntity(game), Entity.Type.HORSE to horse!!.toEntity(game), Entity.Type.WARRIOR to warrior!!.toEntity(game), Entity.Type.WORKER to worker!!.toEntity(game)), miningPerTurn, numberOfResources)
 	}
 
 	companion object
 	{
 		private const val ENDPOINT = "http://bow.westeurope.cloudapp.azure.com:8080/getGameSettings"
 
-		fun fromServer(world: World) =
-				RestTemplate().getForObject(ENDPOINT, GameSettingsData::class.java)?.toGameSettings(world)
+		fun fromServer(game: Game) =
+				RestTemplate().getForObject(ENDPOINT, GameSettingsData::class.java)?.toGameSettings(game)
 	}
 }

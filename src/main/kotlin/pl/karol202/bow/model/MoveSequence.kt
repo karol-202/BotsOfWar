@@ -1,4 +1,4 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
 import org.newdawn.slick.util.pathfinding.Path
 
@@ -30,13 +30,13 @@ enum class Direction(val symbol: String)
 	}
 }
 
-class LocalMoveSequence(val steps: List<Direction>)
+class MoveSequence(val steps: List<Direction>)
 {
 	companion object
 	{
-		fun fromPath(path: Path): LocalMoveSequence
+		fun fromPath(path: Path): MoveSequence
 		{
-			if(path.length <= 1) return LocalMoveSequence(emptyList())
+			if(path.length <= 1) return MoveSequence(emptyList())
 			var lastX = path.getX(0)
 			var lastY = path.getY(0)
 			val steps = (1 until path.length).map { path.getStep(it) }.map { step ->
@@ -45,11 +45,7 @@ class LocalMoveSequence(val steps: List<Direction>)
 				lastY = step.y
 				direction
 			}
-			return LocalMoveSequence(steps)
+			return MoveSequence(steps)
 		}
 	}
-
-	fun toServerSystem() = ServerMoveSequence(steps.map { it.invertVertically() })
 }
-
-class ServerMoveSequence(val steps: List<Direction>)

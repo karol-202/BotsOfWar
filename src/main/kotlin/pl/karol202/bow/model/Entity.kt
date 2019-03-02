@@ -1,9 +1,9 @@
-package ncdc.bow.model
+package pl.karol202.bow.model
 
-import ncdc.bow.World
+import pl.karol202.bow.game.Game
 
 data class Entity(val id: String,
-                  val owner: Owner?,
+                  val owner: Player.Side?,
                   val type: Type,
                   val position: LocalPosition,
                   val hp: Int,
@@ -13,17 +13,17 @@ data class Entity(val id: String,
                   val cost: Int,
                   val entrench: Boolean)
 {
-	enum class Type
+	enum class Type(val symbol: String)
 	{
-		HORSE,
-		ARCHER,
-		WORKER,
-		WARRIOR
+		HORSE("H"),
+		ARCHER("A"),
+		WORKER("W"),
+		WARRIOR("F")
 	}
 
 	data class EntityData(val id: String = "",
 	                      val coordinates: ServerPosition? = null,
-	                      val owner: Owner? = null,
+	                      val owner: Player.Side? = null,
 	                      val hp: Int = 0,
 	                      val name: Type? = null,
 	                      val rangeOfAttack: Int = 0,
@@ -32,8 +32,7 @@ data class Entity(val id: String,
 	                      val cost: Int = 0,
 	                      val entrench: Boolean = false)
 	{
-		fun toEntity(world: World) =
-				Entity(id, owner, name!!, coordinates?.toLocalSystem(world) ?: LocalPosition(),
-				       hp, actionPoints, rangeOfAttack, damage, cost, entrench)
+		fun toEntity(game: Game) = Entity(id, owner, name!!, coordinates?.toLocalSystem(game)
+				?: LocalPosition(), hp, actionPoints, rangeOfAttack, damage, cost, entrench)
 	}
 }
