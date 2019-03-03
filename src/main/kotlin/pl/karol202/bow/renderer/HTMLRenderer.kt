@@ -32,7 +32,7 @@ class HTMLRenderer(private val writer: Writer) : Renderer
 									style = "padding: 0;"
 
 									val position = LocalPosition(x, y)
-									val entities = game.entities.filter { it.position == position }
+									val entities = game.allEntities.filter { it.position == position }
 
 									renderCell(cell, entities)
 								}

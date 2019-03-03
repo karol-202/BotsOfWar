@@ -25,16 +25,18 @@ bootJar {
 repositories {
     mavenCentral()
     jcenter()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    compile "org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.12"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.12"
     
-    compile "org.springframework.boot:spring-boot-starter-web"
-    compile "org.springframework:spring-web"
-    compile "com.fasterxml.jackson.core:jackson-databind"
-    compile "org.slick2d:slick2d-core:1.0.1"
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework:spring-web"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation "org.slick2d:slick2d-core:1.0.1"
+    implementation "com.github.karol-202:Axon:0.2.2"
     
     testCompile "junit:junit"
 }

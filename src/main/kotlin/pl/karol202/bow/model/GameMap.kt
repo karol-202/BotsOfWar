@@ -1,9 +1,9 @@
 package pl.karol202.bow.model
 
-import pl.karol202.bow.APIException
 import org.newdawn.slick.util.pathfinding.PathFindingContext
 import org.newdawn.slick.util.pathfinding.TileBasedMap
 import org.springframework.web.client.RestTemplate
+import pl.karol202.bow.APIException
 
 //Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.
 class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
@@ -38,6 +38,8 @@ class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
 	}
 
 	operator fun get(x: Int, y: Int) = data[y][x]
+
+	operator fun get(position: LocalPosition) = data[position.x][position.y]
 
 	override fun blocked(context: PathFindingContext?, tx: Int, ty: Int) = !this[tx, ty].walkable
 

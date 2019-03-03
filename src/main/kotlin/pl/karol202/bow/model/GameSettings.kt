@@ -1,7 +1,8 @@
 package pl.karol202.bow.model
 
-import pl.karol202.bow.game.Game
 import org.springframework.web.client.RestTemplate
+import pl.karol202.bow.APIException
+import pl.karol202.bow.game.Game
 
 data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
                         val miningPerTurn: Int,
@@ -14,7 +15,11 @@ data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
 	                                    val miningPerTurn: Int = 0,
 	                                    val numberOfResources: Int = 0)
 	{
-		fun toGameSettings(game: Game) = GameSettings(mapOf(Entity.Type.ARCHER to archer!!.toEntity(game), Entity.Type.HORSE to horse!!.toEntity(game), Entity.Type.WARRIOR to warrior!!.toEntity(game), Entity.Type.WORKER to worker!!.toEntity(game)), miningPerTurn, numberOfResources)
+		fun toGameSettings(game: Game) =
+				GameSettings(mapOf(Entity.Type.ARCHER to archer!!.toEntity(game),
+				                   Entity.Type.HORSE to horse!!.toEntity(game),
+				                   Entity.Type.WARRIOR to warrior!!.toEntity(game),
+				                   Entity.Type.WORKER to worker!!.toEntity(game)), miningPerTurn, numberOfResources)
 	}
 
 	companion object
@@ -23,5 +28,6 @@ data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
 
 		fun fromServer(game: Game) =
 				RestTemplate().getForObject(ENDPOINT, GameSettingsData::class.java)?.toGameSettings(game)
+						?: throw APIException("Cannot fetch game settings.")
 	}
 }

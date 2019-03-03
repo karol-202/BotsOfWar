@@ -11,7 +11,13 @@ data class Player(val id: Int,
 {
 	enum class Side
 	{
-		PLAYER1, PLAYER2
+		PLAYER1, PLAYER2;
+
+		val opposite get() = when(this)
+		{
+			PLAYER1 -> PLAYER2
+			PLAYER2 -> PLAYER1
+		}
 	}
 
 	data class PlayerData(val active: Boolean = false,

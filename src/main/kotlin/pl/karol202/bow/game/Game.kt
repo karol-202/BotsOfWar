@@ -1,7 +1,9 @@
 package pl.karol202.bow.game
 
 import pl.karol202.bow.model.GameMap
+import pl.karol202.bow.model.GameSettings
 import pl.karol202.bow.model.GameState
+import pl.karol202.bow.model.Player
 
 class Game private constructor(val gameMap: GameMap,
                                gameStateData: GameState.GameStateData)
@@ -15,20 +17,24 @@ class Game private constructor(val gameMap: GameMap,
 		}
 	}
 
-	private var gameState: GameState = gameStateData.toGameState(this)
-
 	val width = gameMap.widthInTiles
 	val height = gameMap.heightInTiles
 
+	val gameSettings = GameSettings.fromServer(this)
+	val entitySettings get() = gameSettings.entitySettings.values.toList()
+
+	var gameState: GameState = gameStateData.toGameState(this)
+		private set
+
 	val player1 get() = gameState.player1
 	val player2 get() = gameState.player2
-	val players get() = listOf(player1, player2)
-	val activePlayer get() = players.single { it.active }.side
-
-	val entities get() = players.flatMap { it.entities }
+	val activePlayer get() = gameState.activePlayer
+	val allEntities get() = gameState.allEntities
 
 	fun updateGameState(gameStateData: GameState.GameStateData)
 	{
 		gameState = gameStateData.toGameState(this)
 	}
+
+	fun getPlayer(side: Player.Side) = gameState.getPlayer(side)
 }

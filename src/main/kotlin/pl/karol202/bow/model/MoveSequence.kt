@@ -2,23 +2,17 @@ package pl.karol202.bow.model
 
 import org.newdawn.slick.util.pathfinding.Path
 
-enum class Direction(val symbol: String)
+enum class Direction(val symbol: String,
+                     val offset: LocalPosition)
 {
-	LEFT("L"),
-	UP("U"),
-	RIGHT("R"),
-	DOWN("D");
+	LEFT("L", LocalPosition(-1, 0)),
+	UP("U", LocalPosition(0, -1)),
+	RIGHT("R", LocalPosition(1, 0)),
+	DOWN("D", LocalPosition(0, 1));
 
 	companion object
 	{
-		fun fromDeltaPosition(deltaX: Int, deltaY: Int) = when
-		{
-			deltaX == -1 && deltaY == 0 -> LEFT
-			deltaX == 0 && deltaY == -1 -> UP
-			deltaX == 1 && deltaY == 0 -> RIGHT
-			deltaX == 0 && deltaY == 1 -> DOWN
-			else -> throw IllegalArgumentException("Unknown direction: $deltaX, $deltaY")
-		}
+		fun fromOffset(offset: LocalPosition) = values().single { it.offset == offset }
 	}
 
 	fun invertVertically() = when(this)
@@ -37,12 +31,11 @@ class MoveSequence(val steps: List<Direction>)
 		fun fromPath(path: Path): MoveSequence
 		{
 			if(path.length <= 1) return MoveSequence(emptyList())
-			var lastX = path.getX(0)
-			var lastY = path.getY(0)
+			var lastPosition = LocalPosition(path.getX(0), path.getY(0))
 			val steps = (1 until path.length).map { path.getStep(it) }.map { step ->
-				val direction = Direction.fromDeltaPosition(step.x - lastX, step.y - lastY)
-				lastX = step.x
-				lastY = step.y
+				val currentPosition = LocalPosition(step.x, step.y)
+				val direction = Direction.fromOffset(currentPosition - lastPosition)
+				lastPosition = currentPosition
 				direction
 			}
 			return MoveSequence(steps)
