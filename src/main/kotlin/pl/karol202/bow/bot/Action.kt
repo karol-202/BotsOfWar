@@ -1,8 +1,13 @@
 package pl.karol202.bow.bot
 
 import pl.karol202.bow.model.*
+import kotlin.math.floor
 
-private fun <T> Iterable<T>.replace(old: T, new: T) = map { if(it == old) new else it }
+private fun <T> Iterable<T>.replace(old: T, new: T?) =
+		if(new != null) map { if(it == old) new else it }
+		else remove(old)
+
+private fun <T> Iterable<T>.remove(element: T) = filterNot { it == element }
 
 interface Action
 {
@@ -12,18 +17,14 @@ interface Action
 	fun toModelAction(): ActionModel
 }
 
-class Attack(private val attackerPlayer: Player,
-             private val attacker: Entity,
-             private val victimPlayer: Player,
-             private val victim: Entity) : Action
+abstract class Attack(private val attackerPlayer: Player,
+                      protected val attacker: Entity,
+                      protected val victimPlayer: Player) : Action
 {
 	override fun perform(gameState: GameState): GameState
 	{
-		val newAttacker = attacker.copy(actionPoints = attacker.actionPoints - 1)
-		val newVictim = victim.copy(hp = victim.hp - attacker.damage)
-
-		val newAttackerPlayer = attackerPlayer.copy(entities = attackerPlayer.entities.replace(attacker, newAttacker))
-		val newVictimPlayer = victimPlayer.copy(entities = victimPlayer.entities.replace(victim, newVictim))
+		val newAttackerPlayer = copyAttackerPlayer()
+		val newVictimPlayer = copyVictimPlayer()
 
 		return when
 		{
@@ -35,7 +36,43 @@ class Attack(private val attackerPlayer: Player,
 		}
 	}
 
+	private fun copyAttackerPlayer(): Player
+	{
+		val newAttacker = attacker.copy(actionPoints = attacker.actionPoints - 1)
+		return attackerPlayer.copy(entities = attackerPlayer.entities.replace(attacker, newAttacker))
+	}
+
+	protected abstract fun copyVictimPlayer(): Player
+}
+
+class EntityAttack(attackerPlayer: Player,
+                   attacker: Entity,
+                   victimPlayer: Player,
+                   private val victim: Entity) : Attack(attackerPlayer, attacker, victimPlayer)
+{
+	override fun copyVictimPlayer(): Player
+	{
+		val damageMultiplier = if(victim.entrench) 0.5f else 1f
+		val newVictimHp = victim.hp - floor(attacker.damage * damageMultiplier).toInt() //Not sure how to round
+		val newVictim = if(newVictimHp > 0) victim.copy(hp = newVictimHp) else null
+		return victimPlayer.copy(entities = victimPlayer.entities.replace(victim, newVictim))
+	}
+
 	override fun toModelAction() = AttackActionModel(attacker, victim)
+}
+
+class BaseAttack(attackerPlayer: Player,
+                 attacker: Entity,
+                 victimPlayer: Player) : Attack(attackerPlayer, attacker, victimPlayer)
+{
+	override fun copyVictimPlayer(): Player
+	{
+		val oldBase = victimPlayer.base
+		val newBase = oldBase.copy(hp = oldBase.hp - attacker.damage)
+		return victimPlayer.copy(base = newBase)
+	}
+
+	override fun toModelAction() = AttackActionModel(attacker, victimPlayer.base)
 }
 
 class Move(private val player: Player,

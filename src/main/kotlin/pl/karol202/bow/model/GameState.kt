@@ -41,4 +41,6 @@ data class GameState(val gameId: Int,
 
 	fun getEntityById(entityId: String, player: Player? = null) =
 			(player?.entities ?: allEntities).single { it.id == entityId }
+
+	fun getMineAt(position: LocalPosition) = mines.singleOrNull { it.position == position }
 }

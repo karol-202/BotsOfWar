@@ -37,11 +37,11 @@ class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
 		private fun Array<Array<Cell>>.convertToList() = this.map { it.toList() }
 	}
 
-	operator fun get(x: Int, y: Int) = data[y][x]
+	operator fun get(x: Int, y: Int) = data.getOrNull(y)?.getOrNull(x)
 
-	operator fun get(position: LocalPosition) = data[position.x][position.y]
+	operator fun get(position: LocalPosition) = this[position.x, position.y]
 
-	override fun blocked(context: PathFindingContext?, tx: Int, ty: Int) = !this[tx, ty].walkable
+	override fun blocked(context: PathFindingContext?, tx: Int, ty: Int) = this[tx, ty]?.walkable != true
 
 	override fun getCost(context: PathFindingContext?, tx: Int, ty: Int) = 1f
 

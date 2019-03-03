@@ -9,9 +9,11 @@ data class Mine(val id: String,
                 val miningPerWorker: Int,
                 val workersNumber: Int)
 {
-	enum class Owner
+	enum class Owner(val correspondingSide: Player.Side?)
 	{
-		PLAYER1, PLAYER2, NEUTRAL
+		PLAYER1(Player.Side.PLAYER1),
+		PLAYER2(Player.Side.PLAYER2),
+		NEUTRAL(null)
 	}
 
 	data class MineData(val coordinates: ServerPosition? = null,
@@ -23,4 +25,6 @@ data class Mine(val id: String,
 	{
 		fun toMine(game: Game) = Mine(id!!, owner!!, coordinates!!.toLocalSystem(game), goldLeft, miningPerWorker, workersNumber)
 	}
+
+	fun isAvailableFor(side: Player.Side) = owner.correspondingSide != side.opposite
 }

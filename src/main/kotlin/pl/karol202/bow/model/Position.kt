@@ -16,4 +16,6 @@ data class LocalPosition(val x: Int = 0,
 	operator fun plus(other: LocalPosition) = LocalPosition(x + other.x, y + other.y)
 
 	operator fun minus(other: LocalPosition) = LocalPosition(x - other.x, y - other.y)
+
+	operator fun times(factor: Int) = LocalPosition(x * factor, y * factor)
 }

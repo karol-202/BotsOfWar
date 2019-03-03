@@ -61,37 +61,48 @@ class DarvinBot(networkStructure: NetworkStructure) : Bot
 
 	private fun getPossibleMoves(entity: Entity): List<Move>
 	{
-		fun GameMap.Cell.isWalkableFor(entityType: Entity.Type) =
-				walkable || (this == GameMap.Cell.MINE && entityType == Entity.Type.WORKER)
+		fun isCellWalkable(position: LocalPosition) = game.isPositionWalkable(position)
 
-		fun isMoveAvailable(offset: LocalPosition) = game.gameMap[entity.position + offset].isWalkableFor(entity.type)
+		fun isCellOccupied(position: LocalPosition) = currentState.getEntitiesAt(position).isNotEmpty()
 
-		return Direction.values().filter { isMoveAvailable(it.offset) }.map { Move(player, entity, it) }
+		fun isCellAvailable(position: LocalPosition) = isCellWalkable(position) && !isCellOccupied(position)
+
+		fun isCellAnAvailableMine(position: LocalPosition) = currentState.getMineAt(position)?.isAvailableFor(side) == true
+
+		fun isCellAMineAvailableFor(entityType: Entity.Type, position: LocalPosition) =
+				entityType == Entity.Type.WORKER && isCellAnAvailableMine(position)
+
+		fun isMoveAvailable(position: LocalPosition) =
+				isCellAvailable(position) || isCellAMineAvailableFor(entity.type, position)
+
+		return Direction.values().filter { isMoveAvailable(entity.position + it.offset) }.map { Move(player, entity, it) }
 	}
 
 	private fun getPossibleAttacks(entity: Entity): List<Attack>
 	{
 		val attacks = mutableListOf<Attack>()
 
+		fun getEntityAttacksFor(position: LocalPosition) = currentState.getEntitiesAt(position)
+				.filter { it.owner == side.opposite }
+				.map { EntityAttack(player, entity, enemyPlayer, it) }
+
+		fun getBaseAttacksFor(position: LocalPosition) =
+			if(enemyPlayer.base.position == position) listOf(BaseAttack(player, entity, enemyPlayer)) else emptyList()
+
 		fun addAttacksFor(offset: LocalPosition): Boolean //True indicates possibility of further discovery
 		{
 			val position = entity.position + offset
-			if(!game.gameMap[position.x, position.y].walkable) return false
-			currentState.getEntitiesAt(position)
-					.filter { it.owner == side.opposite }
-					.forEach { attacks += Attack(player, entity, enemyPlayer, it) }
+			if(game.gameMap[position]?.walkable != true) return false
+
+			attacks += getEntityAttacksFor(position)
+			attacks += getBaseAttacksFor(position)
 			return true
 		}
 
-		for(upOffset in 1..entity.rangeOfAttack)
-			if(!addAttacksFor(LocalPosition(0, -upOffset))) break
-		for(rightOffset in 1..entity.rangeOfAttack)
-			if(!addAttacksFor(LocalPosition(0, rightOffset))) break
-		for(downOffset in 1..entity.rangeOfAttack)
-			if(!addAttacksFor(LocalPosition(0, downOffset))) break
-		for(leftOffset in 1..entity.rangeOfAttack)
-			if(!addAttacksFor(LocalPosition(0, -leftOffset))) break
-
+		Direction.values().forEach { direction ->
+			for(distance in 1..entity.rangeOfAttack)
+				if(!addAttacksFor(direction.offset * distance)) break
+		}
 		return attacks
 	}
 

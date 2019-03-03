@@ -3,7 +3,7 @@ package pl.karol202.bow.game
 import pl.karol202.bow.model.GameMap
 import pl.karol202.bow.model.GameSettings
 import pl.karol202.bow.model.GameState
-import pl.karol202.bow.model.Player
+import pl.karol202.bow.model.LocalPosition
 
 class Game private constructor(val gameMap: GameMap,
                                gameStateData: GameState.GameStateData)
@@ -36,5 +36,5 @@ class Game private constructor(val gameMap: GameMap,
 		gameState = gameStateData.toGameState(this)
 	}
 
-	fun getPlayer(side: Player.Side) = gameState.getPlayer(side)
+	fun isPositionWalkable(position: LocalPosition) = gameMap[position]?.walkable == true
 }

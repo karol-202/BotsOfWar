@@ -26,6 +26,8 @@ class AttackActionModel(id: String,
                         target: String) : ActionModel(id, Type.ATTACK, target)
 {
 	constructor(attacker: Entity, victim: Entity) : this(attacker.id, victim.id)
+
+	constructor(attacker: Entity, victim: Base) : this(attacker.id, victim.id)
 }
 
 class MoveActionModel(id: String,
