@@ -12,7 +12,7 @@ class Game private constructor(val gameMap: GameMap,
 	{
 		fun create(gameStateData: GameState.GameStateData): Game
 		{
-			val gameMap = GameMap.fromServer(gameStateData.mapPath!!)
+			val gameMap = GameMap.fromServer()
 			return Game(gameMap, gameStateData)
 		}
 	}

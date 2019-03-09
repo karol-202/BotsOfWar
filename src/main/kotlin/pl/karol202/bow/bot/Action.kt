@@ -81,7 +81,8 @@ class Move(private val player: Player,
 {
 	override fun perform(gameState: GameState): GameState
 	{
-		val newEntity = entity.copy(position = entity.position + direction.offset)
+		val newEntity = entity.copy(position = entity.position + direction.offset,
+		                            actionPoints = entity.actionPoints - 1)
 		val newPlayer = player.copy(entities = player.entities.replace(entity, newEntity))
 
 		return when(player.side)
@@ -99,7 +100,8 @@ class Entrenchment(private val player: Player,
 {
 	override fun perform(gameState: GameState): GameState
 	{
-		val newEntity = entity.copy(entrench = true)
+		val newEntity = entity.copy(entrench = true,
+		                            actionPoints = entity.actionPoints - 1)
 		val newPlayer = player.copy(entities = player.entities.replace(entity, newEntity))
 
 		return when(player.side)

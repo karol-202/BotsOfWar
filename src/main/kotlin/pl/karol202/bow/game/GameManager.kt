@@ -1,8 +1,8 @@
 package pl.karol202.bow.game
 
 import pl.karol202.bow.bot.Bot
-import pl.karol202.bow.model.ActionModel
 import pl.karol202.bow.model.GameState
+import pl.karol202.bow.model.Order
 import pl.karol202.bow.model.Player
 
 abstract class GameManager
@@ -10,7 +10,7 @@ abstract class GameManager
 	private var game: Game? = null
 	private val bots = mutableMapOf<Player.Side, Bot>()
 
-	fun updateGameStateAndGetOrders(gameStateData: GameState.GameStateData): List<ActionModel>
+	fun updateStateAndGetOrder(gameStateData: GameState.GameStateData): Order
 	{
 		val game = game?.also { it.updateGameState(gameStateData) } ?: startNewGame(gameStateData)
 		val player = game.activePlayer

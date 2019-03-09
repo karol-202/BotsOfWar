@@ -14,14 +14,6 @@ enum class Direction(val symbol: String,
 	{
 		fun fromOffset(offset: LocalPosition) = values().single { it.offset == offset }
 	}
-
-	fun invertVertically() = when(this)
-	{
-		LEFT -> LEFT
-		UP -> DOWN
-		RIGHT -> RIGHT
-		DOWN -> UP
-	}
 }
 
 class MoveSequence(val steps: List<Direction>)

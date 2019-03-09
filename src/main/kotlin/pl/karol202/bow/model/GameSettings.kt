@@ -2,6 +2,7 @@ package pl.karol202.bow.model
 
 import org.springframework.web.client.RestTemplate
 import pl.karol202.bow.APIException
+import pl.karol202.bow.controller.BotController
 import pl.karol202.bow.game.Game
 
 data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
@@ -24,7 +25,7 @@ data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
 
 	companion object
 	{
-		private const val ENDPOINT = "http://bow.westeurope.cloudapp.azure.com:8080/getGameSettings"
+		private const val ENDPOINT = "${BotController.SERVER_ADDRESS}/getGameSettings"
 
 		fun fromServer(game: Game) =
 				RestTemplate().getForObject(ENDPOINT, GameSettingsData::class.java)?.toGameSettings(game)

@@ -4,7 +4,7 @@ import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.Order
 import pl.karol202.bow.model.Player
 
-interface Bot
+class EmptyBot : Bot
 {
-	fun play(game: Game, side: Player.Side): Order
+	override fun play(game: Game, side: Player.Side) = Order.emptyOrder
 }

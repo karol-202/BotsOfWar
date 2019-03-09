@@ -4,6 +4,7 @@ import org.newdawn.slick.util.pathfinding.PathFindingContext
 import org.newdawn.slick.util.pathfinding.TileBasedMap
 import org.springframework.web.client.RestTemplate
 import pl.karol202.bow.APIException
+import pl.karol202.bow.controller.BotController
 
 //Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.
 class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
@@ -20,10 +21,12 @@ class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
 
 	companion object
 	{
-		fun fromServer(endpoint: String): GameMap
+		private const val ENDPOINT = "${BotController.SERVER_ADDRESS}/getMap"
+
+		fun fromServer(): GameMap
 		{
 			val template = RestTemplate()
-			val dataArray = template.getForObject(endpoint, Array<Array<Cell>>::class.java)
+			val dataArray = template.getForObject(ENDPOINT, Array<Array<Cell>>::class.java)
 					?: throw APIException("Cannot fetch map.")
 			if(!dataArray.ensureSize()) throw APIException("Invalid data")
 

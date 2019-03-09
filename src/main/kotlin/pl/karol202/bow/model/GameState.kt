@@ -6,7 +6,6 @@ data class GameState(val gameId: Int,
                      val tournamentId: Int,
                      val currentTurn: Int,
                      val currentStep: Int, //Every turn is 2 steps
-                     val mapPath: String,
                      val mines: List<Mine>,
                      val player1: Player,
                      val player2: Player,
@@ -18,13 +17,16 @@ data class GameState(val gameId: Int,
 	                         val gameId: Int = 0,
 	                         val lastActions: List<ActionModel.ActionData>? = null,
 	                         val lastLogs: List<String>? = null,
-	                         val mapPath: String? = null,
+	                         var mapPath: String? = null, //Server address will be added as a prefix by controller
 	                         val mines: List<Mine.MineData>? = null,
 	                         val player1: Player.PlayerData? = null,
 	                         val player2: Player.PlayerData? = null,
 	                         val tournamentId: Int = 0)
 	{
-		fun toGameState(game: Game) = GameState(gameId, tournamentId, currentTurn, currentStep, mapPath!!, mines!!.map { it.toMine(game) }, player1!!.toPlayer(game), player2!!.toPlayer(game), lastActions!!.map { it.toAction() }, lastLogs!!)
+		fun toGameState(game: Game) =
+				GameState(gameId, tournamentId, currentTurn, currentStep, mines!!.map { it.toMine(game) },
+				          player1!!.toPlayer(game, Player.Side.PLAYER1), player2!!.toPlayer(game, Player.Side.PLAYER2),
+				          lastActions?.map { it.toAction() } ?: emptyList(), lastLogs ?: emptyList())
 	}
 
 	private val players get() = listOf(player1, player2)

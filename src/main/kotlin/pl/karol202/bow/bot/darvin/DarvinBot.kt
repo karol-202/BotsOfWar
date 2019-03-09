@@ -3,15 +3,16 @@ package pl.karol202.bow.bot.darvin
 import pl.karol202.bow.bot.*
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
+import kotlin.random.Random
 
-class DarvinBot(networkStructure: NetworkStructure) : Bot
+class DarvinBot : Bot
 {
 	companion object
 	{
 		private const val ACTION_THRESHOLD = 0f
 	}
 
-	private val network = networkStructure.createNetwork()
+	private val random = Random(4)
 
 	private lateinit var game: Game
 	private lateinit var currentState: GameState
@@ -20,12 +21,13 @@ class DarvinBot(networkStructure: NetworkStructure) : Bot
 	private val player get() = currentState.getPlayer(side)
 	private val enemyPlayer get() = currentState.getPlayer(side.opposite)
 
-	override fun play(game: Game, side: Player.Side): List<ActionModel>
+	override fun play(game: Game, side: Player.Side): Order
 	{
 		initState(game, side)
 
 		val actions = player.entities.flatMap { playWithEntity(it.id) } + recruit()
-		return actions.filterNotNull().map { it.toModelAction() }
+		val actionModels = actions.filterNotNull().map { it.toModelAction() }
+		return Order(actionModels)
 	}
 
 	private fun initState(game: Game, side: Player.Side)
@@ -124,5 +126,5 @@ class DarvinBot(networkStructure: NetworkStructure) : Bot
 
 	private fun isBaseOccupied() = currentState.getEntitiesAt(player.base.position).isNotEmpty()
 
-	private fun evaluateAction(recruitment: Action): Float = TODO()
+	private fun evaluateAction(action: Action): Float = (random.nextFloat() * 2) - 1
 }

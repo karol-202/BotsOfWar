@@ -33,7 +33,7 @@ class AttackActionModel(id: String,
 class MoveActionModel(id: String,
                       target: String) : ActionModel(id, Type.MOVE, target)
 {
-	constructor(entity: Entity, direction: Direction) : this(entity.id, direction.invertVertically().symbol)
+	constructor(entity: Entity, direction: Direction) : this(entity.id, direction.symbol)
 }
 
 class EntrenchActionModel(id: String,
