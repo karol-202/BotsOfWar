@@ -1,13 +1,11 @@
 package pl.karol202.bow.model
 
-import org.newdawn.slick.util.pathfinding.PathFindingContext
-import org.newdawn.slick.util.pathfinding.TileBasedMap
 import org.springframework.web.client.RestTemplate
 import pl.karol202.bow.APIException
 import pl.karol202.bow.controller.BotController
 
 //Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.
-class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
+class GameMap private constructor(val data: List<List<Cell>>)
 {
 	enum class Cell(val walkable: Boolean)
 	{
@@ -40,17 +38,10 @@ class GameMap private constructor(val data: List<List<Cell>>) : TileBasedMap
 		private fun Array<Array<Cell>>.convertToList() = this.map { it.toList() }
 	}
 
+	val width = data[0].size
+	val height = data.size
+
 	operator fun get(x: Int, y: Int) = data.getOrNull(y)?.getOrNull(x)
 
 	operator fun get(position: LocalPosition) = this[position.x, position.y]
-
-	override fun blocked(context: PathFindingContext?, tx: Int, ty: Int) = this[tx, ty]?.walkable != true
-
-	override fun getCost(context: PathFindingContext?, tx: Int, ty: Int) = 1f
-
-	override fun pathFinderVisited(x: Int, y: Int) {}
-
-	override fun getWidthInTiles() = data[0].size
-
-	override fun getHeightInTiles() = data.size
 }

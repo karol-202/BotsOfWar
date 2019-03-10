@@ -17,8 +17,8 @@ class Game private constructor(val gameMap: GameMap,
 		}
 	}
 
-	val width = gameMap.widthInTiles
-	val height = gameMap.heightInTiles
+	val width = gameMap.width
+	val height = gameMap.height
 
 	val gameSettings = GameSettings.fromServer(this)
 	val entitySettings get() = gameSettings.entitySettings.values.toList()
