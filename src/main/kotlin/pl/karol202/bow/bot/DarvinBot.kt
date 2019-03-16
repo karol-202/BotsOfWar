@@ -1,18 +1,17 @@
-package pl.karol202.bow.bot.darvin
+package pl.karol202.bow.bot
 
-import pl.karol202.bow.bot.*
+import pl.karol202.bow.bot.agent.Agent
+import pl.karol202.bow.bot.environment.Environment
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
-import kotlin.random.Random
 
-class DarvinBot : Bot
+class DarvinBot(private val agent: Agent,
+                private val environment: Environment) : Bot
 {
 	companion object
 	{
 		private const val ACTION_THRESHOLD = 0f
 	}
-
-	private val random = Random(4)
 
 	private lateinit var game: Game
 	private lateinit var currentState: GameState
@@ -24,6 +23,7 @@ class DarvinBot : Bot
 	override fun play(game: Game, side: Player.Side): Order
 	{
 		initState(game, side)
+		receiveRewards(game.state)
 
 		val actions = player.entities.flatMap { playWithEntity(it.id) } + recruit()
 		val actionModels = actions.filterNotNull().map { it.toModelAction() }
@@ -33,8 +33,14 @@ class DarvinBot : Bot
 	private fun initState(game: Game, side: Player.Side)
 	{
 		this.game = game
-		this.currentState = game.gameState
+		this.currentState = game.state
 		this.side = side
+	}
+
+	private fun receiveRewards(state: GameState)
+	{
+		agent.receiveReward(environment.updateStateAndGetRewards(state))
+		agent.moveToNextTimestamp()
 	}
 
 	private fun playWithEntity(entityId: String): List<Action>
@@ -126,5 +132,11 @@ class DarvinBot : Bot
 
 	private fun isBaseOccupied() = currentState.getEntitiesAt(player.base.position).isNotEmpty()
 
-	private fun evaluateAction(action: Action): Float = (random.nextFloat() * 2) - 1
+	private fun evaluateAction(action: Action): Float = agent.evaluateAction(currentState, action)
+
+	override fun endGame(game: Game)
+	{
+		receiveRewards(game.state)
+		agent.teachAllAndReset()
+	}
 }

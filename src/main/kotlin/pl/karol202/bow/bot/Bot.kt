@@ -7,4 +7,6 @@ import pl.karol202.bow.model.Player
 interface Bot
 {
 	fun play(game: Game, side: Player.Side): Order
+
+	fun endGame(game: Game)
 }

@@ -23,17 +23,17 @@ class Game private constructor(val gameMap: GameMap,
 	val gameSettings = GameSettings.fromServer(this)
 	val entitySettings get() = gameSettings.entitySettings.values.toList()
 
-	var gameState: GameState = gameStateData.toGameState(this)
+	var state: GameState = gameStateData.toGameState(this)
 		private set
 
-	val player1 get() = gameState.player1
-	val player2 get() = gameState.player2
-	val activePlayer get() = gameState.activePlayer
-	val allEntities get() = gameState.allEntities
+	val player1 get() = state.player1
+	val player2 get() = state.player2
+	val activePlayer get() = state.activePlayer
+	val allEntities get() = state.allEntities
 
 	fun updateGameState(gameStateData: GameState.GameStateData)
 	{
-		gameState = gameStateData.toGameState(this)
+		state = gameStateData.toGameState(this)
 	}
 
 	fun isPositionWalkable(position: LocalPosition) = gameMap[position]?.walkable == true
