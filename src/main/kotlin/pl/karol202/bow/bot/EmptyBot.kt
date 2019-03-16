@@ -8,5 +8,5 @@ class EmptyBot : Bot
 {
 	override fun play(game: Game, side: Player.Side) = Order.emptyOrder
 
-	override fun endGame(game: Game) { }
+	override fun endGame(game: Game, winner: Player.Side) { }
 }

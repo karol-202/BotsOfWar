@@ -8,5 +8,5 @@ interface Bot
 {
 	fun play(game: Game, side: Player.Side): Order
 
-	fun endGame(game: Game)
+	fun endGame(game: Game, winner: Player.Side)
 }

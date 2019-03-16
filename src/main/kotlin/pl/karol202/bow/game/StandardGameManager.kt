@@ -10,9 +10,9 @@ class StandardGameManager(private val bot: Bot) : GameManager
 
 	override fun updateStateAndGetOrder(gameStateData: GameState.GameStateData): Order
 	{
-		val game = game?.also { it.updateGameState(gameStateData) } ?: startNewGame(gameStateData)
+		val game = game?.also { it.updateState(gameStateData) } ?: startNewGame(gameStateData)
 		//Check if game is ended
-		val player = game.activePlayer
+		val player = game.state.activePlayer
 		return bot.play(game, player.side)
 	}
 	

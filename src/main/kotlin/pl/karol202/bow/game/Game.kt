@@ -1,9 +1,6 @@
 package pl.karol202.bow.game
 
-import pl.karol202.bow.model.GameMap
-import pl.karol202.bow.model.GameSettings
-import pl.karol202.bow.model.GameState
-import pl.karol202.bow.model.LocalPosition
+import pl.karol202.bow.model.*
 
 class Game private constructor(val gameMap: GameMap,
                                gameStateData: GameState.GameStateData)
@@ -21,20 +18,19 @@ class Game private constructor(val gameMap: GameMap,
 	val height = gameMap.height
 
 	val gameSettings = GameSettings.fromServer(this)
-	val entitySettings get() = gameSettings.entitySettings.values.toList()
+	val entitySettings = gameSettings.entitySettings.values.toList()
 
-	var state: GameState = gameStateData.toGameState(this)
+	var state = gameStateData.toGameState(this)
 		private set
 
-	val player1 get() = state.player1
-	val player2 get() = state.player2
-	val activePlayer get() = state.activePlayer
-	val allEntities get() = state.allEntities
+	val id get() = state.gameId
 
-	fun updateGameState(gameStateData: GameState.GameStateData)
+	fun updateState(gameStateData: GameState.GameStateData)
 	{
 		state = gameStateData.toGameState(this)
 	}
 
 	fun isPositionWalkable(position: LocalPosition) = gameMap[position]?.walkable == true
+
+	fun checkWinner() = GameResult.checkWinner(this)
 }

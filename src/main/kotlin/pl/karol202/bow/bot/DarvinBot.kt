@@ -23,7 +23,7 @@ class DarvinBot(private val agent: Agent,
 	override fun play(game: Game, side: Player.Side): Order
 	{
 		initState(game, side)
-		receiveRewards(game.state)
+		receiveRewards(game.state, null)
 
 		val actions = player.entities.flatMap { playWithEntity(it.id) } + recruit()
 		val actionModels = actions.filterNotNull().map { it.toModelAction() }
@@ -37,9 +37,9 @@ class DarvinBot(private val agent: Agent,
 		this.side = side
 	}
 
-	private fun receiveRewards(state: GameState)
+	private fun receiveRewards(state: GameState, winner: Player.Side?)
 	{
-		agent.receiveReward(environment.updateStateAndGetRewards(state))
+		agent.receiveReward(environment.updateStateAndGetRewards(state, winner))
 		agent.moveToNextTimestamp()
 	}
 
@@ -134,9 +134,9 @@ class DarvinBot(private val agent: Agent,
 
 	private fun evaluateAction(action: Action): Float = agent.evaluateAction(currentState, action)
 
-	override fun endGame(game: Game)
+	override fun endGame(game: Game, winner: Player.Side)
 	{
-		receiveRewards(game.state)
+		receiveRewards(game.state, winner)
 		agent.teachAllAndReset()
 	}
 }

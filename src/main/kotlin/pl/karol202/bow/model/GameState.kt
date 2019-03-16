@@ -39,6 +39,8 @@ data class GameState(val gameId: Int,
 		Player.Side.PLAYER2 -> player2
 	}
 
+	fun getPlayerById(playerId: Int) = players.single { it.id == playerId }
+
 	fun getEntitiesAt(position: LocalPosition) = allEntities.filter { it.position == position }
 
 	fun getEntityById(entityId: String, player: Player? = null) =
