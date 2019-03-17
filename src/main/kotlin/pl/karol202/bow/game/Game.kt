@@ -2,7 +2,7 @@ package pl.karol202.bow.game
 
 import pl.karol202.bow.model.*
 
-class Game private constructor(val gameMap: GameMap,
+class Game private constructor(val map: GameMap,
                                gameStateData: GameState.GameStateData)
 {
 	companion object
@@ -14,11 +14,11 @@ class Game private constructor(val gameMap: GameMap,
 		}
 	}
 
-	val width = gameMap.width
-	val height = gameMap.height
+	val width = map.width
+	val height = map.height
 
-	val gameSettings = GameSettings.fromServer(this)
-	val entitySettings = gameSettings.entitySettings.values.toList()
+	val settings = GameSettings.fromServer(this)
+	val entitySettings = settings.entitySettings.values.toList()
 
 	var state = gameStateData.toGameState(this)
 		private set
@@ -30,7 +30,7 @@ class Game private constructor(val gameMap: GameMap,
 		state = gameStateData.toGameState(this)
 	}
 
-	fun isPositionWalkable(position: LocalPosition) = gameMap[position]?.walkable == true
+	fun isPositionWalkable(position: LocalPosition) = map[position]?.walkable == true
 
 	fun checkWinner() = GameResult.checkWinner(this)
 }

@@ -14,7 +14,12 @@ import pl.karol202.axon.specification.NetworkSpecification
 import pl.karol202.axon.specification.createNetworkRandomly
 import pl.karol202.bow.bot.Action
 import pl.karol202.bow.bot.agent.DQNAgent
+import pl.karol202.bow.game.Game
+import pl.karol202.bow.model.Entity
 import pl.karol202.bow.model.GameState
+import pl.karol202.bow.model.LocalPosition
+import pl.karol202.bow.util.FloatRange
+import pl.karol202.bow.util.size
 
 private typealias ReinforcementNetworkSpecification = NetworkSpecification<ReinforcementNetwork, ReinforcementLayer, ReinforcementNeuron>
 
@@ -29,12 +34,42 @@ class DarvinReinforcementNetwork(data: Data?)
 
 	private object Inputs
 	{
-		private val root = compoundInput { }
+		val size get() = root.size
+		private val root = compoundInput {
+			settings()
+			map()
+		}
 
-		val size = root.size
+		private fun InputContext.settings()
+		{
+			scalarInput { game, _, _ -> game.settings.miningPerTurn inLinearRange 0f..100f }
+			Entity.Type.values().forEach { type ->
+				scalarInput { game, _, _ -> game.settings.entitySettings.getValue(type).hp inLinearRange 0f..200f }
+				scalarInput { game, _, _ -> game.settings.entitySettings.getValue(type).actionPoints inLinearRange 0f..10f }
+				scalarInput { game, _, _ -> game.settings.entitySettings.getValue(type).rangeOfAttack inLinearRange 1f..5f }
+				scalarInput { game, _, _ -> game.settings.entitySettings.getValue(type).damage inLinearRange 0f..50f }
+				scalarInput { game, _, _ -> game.settings.entitySettings.getValue(type).cost inLinearRange 0f..500f }
+			}
+		}
 
-		fun transformToInputArray(state: GameState, action: Action) = FloatArray(size).also {
-			root.write(it, 0, state, action)
+		private fun InputContext.map()
+		{
+			repeat(14) { y ->
+				repeat(19) { x ->
+					val position = LocalPosition(x, y)
+					scalarInput { game, _, _ -> if(game.isPositionWalkable(position)) 1f else 0f }
+				}
+			}
+
+			//positionInput { _, state, _ -> state.player1 }
+		}
+
+		private infix fun Int.inLinearRange(range: FloatRange) = this.toFloat().inLinearRange(range)
+
+		private infix fun Float.inLinearRange(range: FloatRange) = (this - range.start) / range.size
+
+		fun transformToInputArray(game: Game, state: GameState, action: Action) = FloatArray(size).also {
+			root.write(it, 0, game, state, action)
 		}
 	}
 
@@ -61,9 +96,9 @@ class DarvinReinforcementNetwork(data: Data?)
 				})
 			})
 
-	fun evaluateAndGetAllData(state: GameState, action: Action): DQNAgent.Evaluation
+	fun evaluateAndGetAllData(game: Game, state: GameState, action: Action): DQNAgent.Evaluation
 	{
-		val input = Inputs.transformToInputArray(state, action)
+		val input = Inputs.transformToInputArray(game, state, action)
 		val outputs = network.calculateAndGetIntermediateOutputs(input)
 		val finalOutput = outputs.last().single() // Network has 1 output
 		return DQNAgent.Evaluation(input, outputs, finalOutput)

@@ -1,7 +1,7 @@
 package pl.karol202.bow.model
 
 import org.springframework.web.client.RestTemplate
-import pl.karol202.bow.APIException
+import pl.karol202.bow.util.APIException
 import pl.karol202.bow.controller.BotController
 
 //Data is list of rows, that are lists of cells. First row is upper edge and last is bottom.

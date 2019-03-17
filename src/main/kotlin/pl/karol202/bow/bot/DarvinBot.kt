@@ -100,7 +100,7 @@ class DarvinBot(private val agent: Agent,
 		fun addAttacksFor(offset: LocalPosition): Boolean //True indicates possibility of further discovery
 		{
 			val position = entity.position + offset
-			if(game.gameMap[position]?.walkable != true) return false
+			if(!game.isPositionWalkable(position)) return false
 
 			attacks += getEntityAttacksFor(position)
 			attacks += getBaseAttacksFor(position)
@@ -132,7 +132,7 @@ class DarvinBot(private val agent: Agent,
 
 	private fun isBaseOccupied() = currentState.getEntitiesAt(player.base.position).isNotEmpty()
 
-	private fun evaluateAction(action: Action): Float = agent.evaluateAction(currentState, action)
+	private fun evaluateAction(action: Action): Float = agent.evaluateAction(game, currentState, action)
 
 	override fun endGame(game: Game, winner: Player.Side)
 	{

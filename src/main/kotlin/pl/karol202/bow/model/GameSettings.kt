@@ -1,9 +1,9 @@
 package pl.karol202.bow.model
 
 import org.springframework.web.client.RestTemplate
-import pl.karol202.bow.APIException
 import pl.karol202.bow.controller.BotController
 import pl.karol202.bow.game.Game
+import pl.karol202.bow.util.APIException
 
 data class GameSettings(val entitySettings: Map<Entity.Type, Entity>,
                         val miningPerTurn: Int,
