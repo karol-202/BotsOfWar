@@ -5,5 +5,5 @@ import pl.karol202.bow.model.Player
 
 interface Environment
 {
-	fun updateStateAndGetRewards(newState: GameState, winner: Player.Side?): Float
+	fun updateStateAndGetReward(newState: GameState, winner: Player.Side?): Float
 }

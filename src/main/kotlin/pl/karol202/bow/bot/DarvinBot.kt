@@ -39,7 +39,7 @@ class DarvinBot(private val agent: Agent,
 
 	private fun receiveRewards(state: GameState, winner: Player.Side?)
 	{
-		agent.receiveReward(environment.updateStateAndGetRewards(state, winner))
+		agent.receiveReward(environment.updateStateAndGetReward(state, winner))
 		agent.moveToNextTimestamp()
 	}
 

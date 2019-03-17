@@ -51,11 +51,11 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	{
 		updateState(gameStateData)
 		val activePlayerSide = state.activePlayer.side
-		val bot = bots.getOrPut(activePlayerSide) { createNewBot() }
+		val bot = bots.getOrPut(activePlayerSide) { createNewBot(activePlayerSide) }
 		return bot.play(this, activePlayerSide)
 	}
 
-	private fun createNewBot() = DarvinBot(DQNAgent(data, LEARN_RATE, DISCOUNT_FACTOR), StandardEnvironment())
+	private fun createNewBot(side: Player.Side) = DarvinBot(DQNAgent(data, LEARN_RATE, DISCOUNT_FACTOR), StandardEnvironment(side))
 
 	private fun stopGame(winner: Player.Side)
 	{
