@@ -1,7 +1,7 @@
 package pl.karol202.bow.model
 
 sealed class ActionModel(private val id: String, //Id of entity or base
-                         private val type: Type,
+                         val type: Type,
                          private val target: String) //Id of entity, move direction or entity to recruit
 {
 	enum class Type(val actionModelCreator: (id: String, target: String) -> ActionModel)

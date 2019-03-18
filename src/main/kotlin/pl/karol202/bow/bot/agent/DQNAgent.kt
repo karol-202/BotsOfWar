@@ -4,11 +4,13 @@ import pl.karol202.bow.bot.Action
 import pl.karol202.bow.bot.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
+import pl.karol202.bow.model.Player
 
 //Deep Q-network agent
-class DQNAgent(data: DarvinReinforcementNetwork.Data?,
+class DQNAgent(private val playerSide: Player.Side,
                private val learnRate: Float,
-               private val discountFactor: Float) : Agent
+               private val discountFactor: Float,
+               data: DarvinReinforcementNetwork.Data?) : Agent
 {
 	class Evaluation(val input: FloatArray,
 	                 val allOutputs: List<FloatArray>, // Including final output
@@ -27,7 +29,7 @@ class DQNAgent(data: DarvinReinforcementNetwork.Data?,
 	private var currentReward = 0f
 
 	override fun evaluateAction(game: Game, state: GameState, action: Action) =
-			network.evaluateAndGetAllData(game, state, action).also { currentEvaluations.add(it) }.finalOutput
+			network.evaluateAndGetAllData(game, state, action, playerSide).also { currentEvaluations.add(it) }.finalOutput
 
 	override fun receiveReward(reward: Float)
 	{

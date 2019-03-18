@@ -17,8 +17,8 @@ interface Action
 	fun toModelAction(): ActionModel
 }
 
-abstract class Attack(private val attackerPlayer: Player,
-                      protected val attacker: Entity,
+sealed class Attack(private val attackerPlayer: Player,
+                      val attacker: Entity,
                       protected val victimPlayer: Player) : Action
 {
 	override fun perform(gameState: GameState): GameState
@@ -48,7 +48,7 @@ abstract class Attack(private val attackerPlayer: Player,
 class EntityAttack(attackerPlayer: Player,
                    attacker: Entity,
                    victimPlayer: Player,
-                   private val victim: Entity) : Attack(attackerPlayer, attacker, victimPlayer)
+                   val victim: Entity) : Attack(attackerPlayer, attacker, victimPlayer)
 {
 	override fun copyVictimPlayer(): Player
 	{
@@ -76,8 +76,8 @@ class BaseAttack(attackerPlayer: Player,
 }
 
 class Move(private val player: Player,
-           private val entity: Entity,
-           private val direction: Direction) : Action
+           val entity: Entity,
+           val direction: Direction) : Action
 {
 	override fun perform(gameState: GameState): GameState
 	{
@@ -96,7 +96,7 @@ class Move(private val player: Player,
 }
 
 class Entrenchment(private val player: Player,
-                   private val entity: Entity) : Action
+                   val entity: Entity) : Action
 {
 	override fun perform(gameState: GameState): GameState
 	{
@@ -115,7 +115,7 @@ class Entrenchment(private val player: Player,
 }
 
 class Recruitment(private val player: Player,
-                  private val entitySettings: Entity) : Action
+                  val entitySettings: Entity) : Action
 {
 	override fun perform(gameState: GameState): GameState
 	{
