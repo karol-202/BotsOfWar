@@ -31,7 +31,7 @@ data class GameState(val gameId: Int,
 
 	val players get() = listOf(player1, player2)
 	val activePlayer get() = players.single { it.active }
-	val entities get() = players.flatMap { it.entities }
+	val allEntities get() = players.flatMap { it.entities }
 
 	fun getPlayer(side: Player.Side) = when(side)
 	{
@@ -41,10 +41,12 @@ data class GameState(val gameId: Int,
 
 	fun getPlayerById(playerId: Int) = players.single { it.id == playerId }
 
-	fun getEntitiesAt(position: LocalPosition) = entities.filter { it.position == position }
+	fun getEntitiesAt(position: LocalPosition) = allEntities.filter { it.position == position }
 
 	fun getEntityById(entityId: String, player: Player? = null) =
-			(player?.entities ?: entities).single { it.id == entityId }
+			(player?.entities ?: allEntities).single { it.id == entityId }
 
 	fun getMineAt(position: LocalPosition) = mines.singleOrNull { it.position == position }
+
+	fun getMineById(mineId: String) = mines.single { it.id == mineId }
 }

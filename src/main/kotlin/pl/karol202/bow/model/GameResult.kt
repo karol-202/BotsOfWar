@@ -6,8 +6,8 @@ import pl.karol202.bow.game.Game
 
 object GameResult
 {
-	data class GameResultData(val gameId: Int,
-	                          val winnerId: Int)
+	data class GameResultData(val gameId: Int = 0,
+	                          val winnerId: Int = 0)
 
 	fun checkWinner(game: Game) = RestTemplate().getForObject(getEndpoint(game), GameResultData::class.java)
 											    ?.takeIf { it.gameId == game.id }

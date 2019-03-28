@@ -43,9 +43,9 @@ class DQNAgent(private val playerSide: Player.Side,
 		currentReward = 0f
 	}
 
+	//Assumes that moveToNextTimestamp() has been called
 	override fun teachAllAndReset()
 	{
-		moveToNextTimestamp()
 		teachNetwork(calculateLearningData())
 		timestamps = mutableListOf()
 	}
@@ -67,4 +67,6 @@ class DQNAgent(private val playerSide: Player.Side,
 	{
 		learningData.forEach { (evaluation, allErrors) -> network.learn(evaluation, allErrors, learnRate) }
 	}
+
+	fun getData() = network.getData()
 }

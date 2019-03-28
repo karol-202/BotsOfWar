@@ -9,7 +9,7 @@ import pl.karol202.axon.network.reinforcementLayer
 import pl.karol202.axon.network.reinforcementNetwork
 import pl.karol202.axon.neuron.NeuronData
 import pl.karol202.axon.neuron.ReinforcementNeuron
-import pl.karol202.axon.neuron.SigmoidalActivation
+import pl.karol202.axon.neuron.TangensoidalActivation
 import pl.karol202.axon.specification.NetworkSpecification
 import pl.karol202.axon.specification.createNetworkRandomly
 import pl.karol202.bow.bot.*
@@ -77,8 +77,8 @@ class DarvinReinforcementNetwork(data: Data?)
 		{
 			repeat(MINES) { mineIndex ->
 				positionInput { _, state, _, _ -> state.mines[mineIndex].position }
-				scalarInput { _, state, _, _ -> state.mines[mineIndex].goldLeft inLinearRange 0f..1000f } //TODO Check range
-				scalarInput { _, state, _, _ -> state.mines[mineIndex].miningPerWorker inLinearRange TODO() }
+				scalarInput { _, state, _, _ -> state.mines[mineIndex].goldLeft inLinearRange 0f..3000f }
+				scalarInput { _, state, _, _ -> state.mines[mineIndex].miningPerWorker inLinearRange 0f..50f }
 				scalarInput { _, state, _, _ -> state.mines[mineIndex].workersNumber inLinearRange 0f..10f }
 				scalarInput { _, state, _, side -> when(state.mines[mineIndex].owner.correspondingSide) {
 					side -> 1f
@@ -191,13 +191,13 @@ class DarvinReinforcementNetwork(data: Data?)
 
 	private val network = reinforcementNetwork(Inputs.size) {
 		reinforcementLayer {
-			repeat(500) { reinforcementNeuron(SigmoidalActivation(1f)) }
+			repeat(500) { reinforcementNeuron(TangensoidalActivation(1f)) }
 		}
 		reinforcementLayer {
-			repeat(50) { reinforcementNeuron(SigmoidalActivation(1f)) }
+			repeat(50) { reinforcementNeuron(TangensoidalActivation(1f)) }
 		}
 		reinforcementLayer {
-			reinforcementNeuron(SigmoidalActivation(1f))
+			reinforcementNeuron(TangensoidalActivation(1f))
 		}
 	}.createNetworkWithData(data)
 
@@ -227,4 +227,10 @@ class DarvinReinforcementNetwork(data: Data?)
 	{
 		network.learn(evaluation.input, evaluation.allOutputs, allErrors, learnRate)
 	}
+
+	fun getData() = Data(network.networkData.getLayersData().map { layer ->
+		layer.getNeuronsData().map { neuron ->
+			neuron.getWeights().toFloatArray()
+		}
+	})
 }

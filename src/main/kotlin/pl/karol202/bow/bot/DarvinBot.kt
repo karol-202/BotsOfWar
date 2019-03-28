@@ -5,8 +5,8 @@ import pl.karol202.bow.bot.environment.Environment
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
 
-class DarvinBot(private val agent: Agent,
-                private val environment: Environment) : Bot
+class DarvinBot<A : Agent>(val agent: A,
+                           private val environment: Environment) : Bot
 {
 	companion object
 	{
@@ -52,8 +52,8 @@ class DarvinBot(private val agent: Agent,
 		{
 			val action = playOnceWithEntity(entity)
 			if(action != null) actions += action
-			else break //If no action has been performed now, continuing would cause an infinite loop
-			entity = currentState.getEntityById(entityId, player)
+			else break // If no action has been performed now, continuing would cause an infinite loop
+			entity = currentState.getEntityById(entityId, player) // Old value is outdated
 		}
 
 		return actions
@@ -62,9 +62,9 @@ class DarvinBot(private val agent: Agent,
 	private fun playOnceWithEntity(entity: Entity): Action?
 	{
 		val possibilities = getPossibleMoves(entity) + getPossibleAttacks(entity) + getPossibleEntrenchment(entity)
-		val action = possibilities.associateWith { evaluateAction(it) }.maxBy { it.value }
-				?.takeIf { it.value >= ACTION_THRESHOLD }?.key
-		return action?.also { currentState = action.perform(currentState) }
+		val evaluatedPossibilities = possibilities.associateWith { evaluateAction(it) }
+		val bestAction = evaluatedPossibilities.maxBy { it.value }?.takeIf { it.value >= ACTION_THRESHOLD }?.key
+		return bestAction?.also { currentState = bestAction.perform(currentState) }
 	}
 
 	private fun getPossibleMoves(entity: Entity): List<Move>
