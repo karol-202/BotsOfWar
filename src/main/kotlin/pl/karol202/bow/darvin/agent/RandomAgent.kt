@@ -1,6 +1,6 @@
-package pl.karol202.bow.bot.agent
+package pl.karol202.bow.darvin.agent
 
-import pl.karol202.bow.bot.Action
+import pl.karol202.bow.darvin.Action
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import kotlin.random.Random
@@ -15,5 +15,5 @@ class RandomAgent(seed: Int) : Agent
 
 	override fun moveToNextTimestamp() { }
 
-	override fun teachAllAndReset() { }
+	override fun teachAndReset() { }
 }

@@ -1,4 +1,4 @@
-package pl.karol202.bow.bot
+package pl.karol202.bow.darvin
 
 import pl.karol202.bow.model.*
 import kotlin.math.floor

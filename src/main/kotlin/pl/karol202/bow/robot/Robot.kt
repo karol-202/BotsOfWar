@@ -3,8 +3,8 @@ package pl.karol202.bow.robot
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import pl.karol202.bow.bot.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.game.DarvinGameListener
+import pl.karol202.bow.game.DarvinGameManager
 import pl.karol202.bow.service.GameService
 
 @Component
@@ -42,9 +42,9 @@ class Robot : DarvinGameListener
 		logger.warn("Game restarted without teaching")
 	}
 
-	override fun onStopAndTeach(data: DarvinReinforcementNetwork.Data?)
+	override fun onStopAndTeach(data: DarvinGameManager.Data)
 	{
 		logger.info("Teaching done")
-		data?.let { gameService.dataSerializer.saveData(it) }
+		gameService.dataSerializer.saveData(data)
 	}
 }

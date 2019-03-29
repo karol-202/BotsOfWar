@@ -1,7 +1,8 @@
-package pl.karol202.bow.bot
+package pl.karol202.bow.darvin.bot
 
-import pl.karol202.bow.bot.agent.Agent
-import pl.karol202.bow.bot.environment.Environment
+import pl.karol202.bow.darvin.*
+import pl.karol202.bow.darvin.agent.Agent
+import pl.karol202.bow.darvin.environment.Environment
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
 
@@ -137,6 +138,6 @@ class DarvinBot<A : Agent>(val agent: A,
 	override fun endGame(game: Game, winner: Player.Side)
 	{
 		receiveRewards(game.state, winner)
-		agent.teachAllAndReset()
+		agent.teachAndReset()
 	}
 }

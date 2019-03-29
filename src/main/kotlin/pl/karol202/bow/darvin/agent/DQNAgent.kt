@@ -1,7 +1,7 @@
-package pl.karol202.bow.bot.agent
+package pl.karol202.bow.darvin.agent
 
-import pl.karol202.bow.bot.Action
-import pl.karol202.bow.bot.neural.DarvinReinforcementNetwork
+import pl.karol202.bow.darvin.Action
+import pl.karol202.bow.darvin.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player
@@ -16,11 +16,11 @@ class DQNAgent(private val playerSide: Player.Side,
 	                 val allOutputs: List<FloatArray>, // Including final output
 	                 val finalOutput: Float)
 
-	private data class LearningData(val evaluation: Evaluation,
-	                                val allErrors: List<FloatArray>)
-
 	private data class Timestamp(val evaluations: List<Evaluation>,
 	                             val reward: Float)
+
+	private data class LearningSample(val evaluation: Evaluation,
+	                                  val allErrors: List<FloatArray>)
 
 	private val network = DarvinReinforcementNetwork(data)
 
@@ -44,26 +44,26 @@ class DQNAgent(private val playerSide: Player.Side,
 	}
 
 	//Assumes that moveToNextTimestamp() has been called
-	override fun teachAllAndReset()
+	override fun teachAndReset()
 	{
 		teachNetwork(calculateLearningData())
 		timestamps = mutableListOf()
 	}
 
-	private fun calculateLearningData(): List<LearningData>
+	private fun calculateLearningData(): List<LearningSample>
 	{
 		var currentReward = 0f
 		return timestamps.reversed().flatMap { (evaluations, reward) ->
 			currentReward *= discountFactor
 			currentReward += reward
 			evaluations.map { evaluation ->
-				val errors = network.calculateErrors(currentReward)
-				LearningData(evaluation, errors)
+				val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
+				LearningSample(evaluation, errors)
 			}
 		}
 	}
 
-	private fun teachNetwork(learningData: List<LearningData>)
+	private fun teachNetwork(learningData: List<LearningSample>)
 	{
 		learningData.forEach { (evaluation, allErrors) -> network.learn(evaluation, allErrors, learnRate) }
 	}

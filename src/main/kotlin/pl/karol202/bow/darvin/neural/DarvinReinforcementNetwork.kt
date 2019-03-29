@@ -1,4 +1,4 @@
-package pl.karol202.bow.bot.neural
+package pl.karol202.bow.darvin.neural
 
 import pl.karol202.axon.layer.LayerData
 import pl.karol202.axon.layer.ReinforcementLayer
@@ -12,8 +12,8 @@ import pl.karol202.axon.neuron.ReinforcementNeuron
 import pl.karol202.axon.neuron.TangensoidalActivation
 import pl.karol202.axon.specification.NetworkSpecification
 import pl.karol202.axon.specification.createNetworkRandomly
-import pl.karol202.bow.bot.*
-import pl.karol202.bow.bot.agent.DQNAgent
+import pl.karol202.bow.darvin.*
+import pl.karol202.bow.darvin.agent.DQNAgent
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
 import pl.karol202.bow.util.FloatRange
@@ -28,7 +28,7 @@ class DarvinReinforcementNetwork(data: Data?)
 		private val RANDOM_RANGE = -0.1f..0.1f
 	}
 
-	data class Data(val layers: List<List<FloatArray>>)
+	data class Data(val layers: List<List<FloatArray>> = emptyList())
 
 	private object Inputs
 	{
@@ -220,8 +220,8 @@ class DarvinReinforcementNetwork(data: Data?)
 		return DQNAgent.Evaluation(input, outputs, finalOutput)
 	}
 
-	fun calculateErrors(reward: Float) =
-			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward)) // Network has 1 output
+	fun calculateErrors(reward: Float, output: Float) =
+			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward * output)) // Network has 1 output
 
 	fun learn(evaluation: DQNAgent.Evaluation, allErrors: List<FloatArray>, learnRate: Float)
 	{

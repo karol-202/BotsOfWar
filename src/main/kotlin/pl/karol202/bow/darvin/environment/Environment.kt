@@ -1,4 +1,4 @@
-package pl.karol202.bow.bot.environment
+package pl.karol202.bow.darvin.environment
 
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player

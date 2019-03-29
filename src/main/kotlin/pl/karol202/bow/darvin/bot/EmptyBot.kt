@@ -1,4 +1,4 @@
-package pl.karol202.bow.bot
+package pl.karol202.bow.darvin.bot
 
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.Order

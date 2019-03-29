@@ -1,6 +1,6 @@
-package pl.karol202.bow.bot.agent
+package pl.karol202.bow.darvin.agent
 
-import pl.karol202.bow.bot.Action
+import pl.karol202.bow.darvin.Action
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 
@@ -12,5 +12,5 @@ interface Agent
 
 	fun moveToNextTimestamp()
 
-	fun teachAllAndReset()
+	fun teachAndReset()
 }

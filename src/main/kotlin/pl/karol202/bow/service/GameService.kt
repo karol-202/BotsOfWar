@@ -15,7 +15,7 @@ class GameService
 {
 	companion object
 	{
-		const val DATA_FILE_PATH = "network.dat"
+		const val DATA_FILE_PATH = "darvin.dat"
 	}
 
 	private val coroutineJob = Job()

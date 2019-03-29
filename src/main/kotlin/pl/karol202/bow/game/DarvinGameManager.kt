@@ -3,10 +3,10 @@ package pl.karol202.bow.game
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import pl.karol202.bow.bot.DarvinBot
-import pl.karol202.bow.bot.agent.DQNAgent
-import pl.karol202.bow.bot.environment.StandardEnvironment
-import pl.karol202.bow.bot.neural.DarvinReinforcementNetwork
+import pl.karol202.bow.darvin.agent.DQNAgent
+import pl.karol202.bow.darvin.bot.DarvinBot
+import pl.karol202.bow.darvin.environment.StandardEnvironment
+import pl.karol202.bow.darvin.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Order
 import pl.karol202.bow.model.Player
@@ -20,11 +20,11 @@ interface DarvinGameListener
 	//Indicates stop without teaching in case of not working of result getting coroutine
 	fun onReset()
 
-	fun onStopAndTeach(data: DarvinReinforcementNetwork.Data?)
+	fun onStopAndTeach(data: DarvinGameManager.Data)
 }
 
 class DarvinGameManager(private val coroutineScope: CoroutineScope,
-                        private var data: DarvinReinforcementNetwork.Data?) : GameManager
+                        initialData: Data?) : GameManager
 {
 	companion object
 	{
@@ -33,6 +33,10 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 		private const val LEARN_RATE = 0.002f
 		private const val DISCOUNT_FACTOR = 0.98f
 	}
+
+	data class Data(val networks: MutableMap<Player.Side, DarvinReinforcementNetwork.Data> = mutableMapOf())
+
+	private val data = initialData ?: Data()
 
 	private var gameListener: DarvinGameListener? = null
 
@@ -85,12 +89,12 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	}
 
 	private fun createNewBot(side: Player.Side) =
-			DarvinBot(DQNAgent(side, LEARN_RATE, DISCOUNT_FACTOR, data), StandardEnvironment(side))
+			DarvinBot(DQNAgent(side, LEARN_RATE, DISCOUNT_FACTOR, data.networks[side]), StandardEnvironment(side))
 
 	private fun stopGameAndTeach(winner: Player.Side)
 	{
 		game?.let { notifyBotsAboutEndOfGame(it, winner) }
-		saveWinningNetworkData(winner)
+		saveNetworksData()
 		gameListener?.onStopAndTeach(data)
 		stopGame()
 	}
@@ -100,9 +104,9 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 		bots.forEach { _, bot -> bot.endGame(game, winner) }
 	}
 
-	private fun saveWinningNetworkData(winner: Player.Side)
+	private fun saveNetworksData()
 	{
-		data = bots.entries.sortedBy { it.key == winner }.last().value.agent.getData()
+		bots.forEach { side, bot -> data.networks[side] = bot.agent.getData() }
 	}
 
 	private fun stopGame()

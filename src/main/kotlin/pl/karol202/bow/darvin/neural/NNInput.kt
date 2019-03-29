@@ -1,6 +1,6 @@
-package pl.karol202.bow.bot.neural
+package pl.karol202.bow.darvin.neural
 
-import pl.karol202.bow.bot.Action
+import pl.karol202.bow.darvin.Action
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.LocalPosition
