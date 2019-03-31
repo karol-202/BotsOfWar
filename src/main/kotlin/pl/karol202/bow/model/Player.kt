@@ -24,7 +24,7 @@ data class Player(val id: Int,
 	                      val base: Base.BaseData? = null,
 	                      val gold: Int = 0,
 	                      val id: Int = 0,
-	                      val side: Side? = null, //Always null
+	                      val owner: Side? = null,
 	                      val units: List<Entity.EntityData>? = null)
 	{
 		fun toPlayer(game: Game, side: Side) = Player(id, side, active, base!!.toBase(game), gold, units!!.map { it.toEntity(game) })

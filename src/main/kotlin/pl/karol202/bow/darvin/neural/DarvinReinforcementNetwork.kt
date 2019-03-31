@@ -21,14 +21,14 @@ import pl.karol202.bow.util.size
 
 private typealias ReinforcementNetworkSpecification = NetworkSpecification<ReinforcementNetwork, ReinforcementLayer, ReinforcementNeuron>
 
-class DarvinReinforcementNetwork(data: Data?)
+class DarvinReinforcementNetwork(initialData: Data?)
 {
 	companion object
 	{
 		private val RANDOM_RANGE = -0.1f..0.1f
 	}
 
-	data class Data(val layers: List<List<FloatArray>> = emptyList())
+	data class Data(val layers: List<List<FloatArray>>)
 
 	private object Inputs
 	{
@@ -199,7 +199,7 @@ class DarvinReinforcementNetwork(data: Data?)
 		reinforcementLayer {
 			reinforcementNeuron(TangensoidalActivation(1f))
 		}
-	}.createNetworkWithData(data)
+	}.createNetworkWithData(initialData)
 
 	private fun ReinforcementNetworkSpecification.createNetworkWithData(data: Data?) =
 			if(data == null) createNetworkRandomly(RANDOM_RANGE)

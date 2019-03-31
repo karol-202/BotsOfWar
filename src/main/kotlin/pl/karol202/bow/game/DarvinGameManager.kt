@@ -6,7 +6,6 @@ import kotlinx.coroutines.launch
 import pl.karol202.bow.darvin.agent.DQNAgent
 import pl.karol202.bow.darvin.bot.DarvinBot
 import pl.karol202.bow.darvin.environment.StandardEnvironment
-import pl.karol202.bow.darvin.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Order
 import pl.karol202.bow.model.Player
@@ -32,11 +31,13 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 		private const val LEARN_RATE = 0.002f
 		private const val DISCOUNT_FACTOR = 0.98f
+		private const val LEARNING_SAMPLES_PER_EPOCH = 100
+		private const val LEARNING_SAMPLES_MEMORY_SIZE = 5000
 	}
 
-	data class Data(val networks: MutableMap<Player.Side, DarvinReinforcementNetwork.Data> = mutableMapOf())
+	data class Data(val agents: Map<Player.Side, DQNAgent.Data>)
 
-	private val data = initialData ?: Data()
+	private val agentsData = initialData?.agents?.toMutableMap() ?: mutableMapOf()
 
 	private var gameListener: DarvinGameListener? = null
 
@@ -89,13 +90,19 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	}
 
 	private fun createNewBot(side: Player.Side) =
-			DarvinBot(DQNAgent(side, LEARN_RATE, DISCOUNT_FACTOR, data.networks[side]), StandardEnvironment(side))
+			DarvinBot(DQNAgent(side,
+			                   LEARN_RATE,
+			                   DISCOUNT_FACTOR,
+			                   LEARNING_SAMPLES_PER_EPOCH,
+			                   LEARNING_SAMPLES_MEMORY_SIZE,
+			                   agentsData[side]),
+			          StandardEnvironment(side))
 
 	private fun stopGameAndTeach(winner: Player.Side)
 	{
 		game?.let { notifyBotsAboutEndOfGame(it, winner) }
 		saveNetworksData()
-		gameListener?.onStopAndTeach(data)
+		gameListener?.onStopAndTeach(Data(agentsData))
 		stopGame()
 	}
 
@@ -106,7 +113,7 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 	private fun saveNetworksData()
 	{
-		bots.forEach { side, bot -> data.networks[side] = bot.agent.getData() }
+		bots.forEach { side, bot -> agentsData[side] = bot.agent.getData() }
 	}
 
 	private fun stopGame()

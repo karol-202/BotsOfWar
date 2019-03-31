@@ -18,7 +18,7 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 		private const val MY_ENTITY_KILL_REWARD = -0.5f
 		private const val ENEMY_ENTITY_KILL_REWARD = 0.5f
 
-		private const val GOLD_FIND_REWARD = 0.02f // For mining amount of gold specified in GameSettings.miningPerTurn
+		private const val GOLD_FIND_REWARD = 0.02f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
 	}
 
 	private lateinit var lastState: GameState
