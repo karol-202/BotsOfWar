@@ -122,8 +122,8 @@ class DarvinBot<A : Agent>(val agent: A,
 
 	private fun recruit(): Recruitment?
 	{
-		val recruitment = getPossibleRecruitments().associateWith { evaluateAction(it) }.maxBy { it.value }
-				?.takeIf { it.value >= ACTION_THRESHOLD }?.key
+		val possibleRecruitments = getPossibleRecruitments().associateWith { evaluateAction(it) }
+		val recruitment = possibleRecruitments.maxBy { it.value }?.takeIf { it.value >= ACTION_THRESHOLD }?.key
 		return recruitment?.also { currentState = it.perform(currentState) }
 	}
 

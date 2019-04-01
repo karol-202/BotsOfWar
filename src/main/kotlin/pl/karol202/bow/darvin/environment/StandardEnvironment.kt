@@ -9,8 +9,8 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 {
 	companion object
 	{
-		private const val WIN_REWARD = 1f
-		private const val LOSS_REWARD = -1f
+		private const val WIN_REWARD = 0f
+		private const val LOSS_REWARD = 0f
 
 		private const val MY_BASE_ATTACK_REWARD = -10f
 		private const val ENEMY_BASE_ATTACK_REWARD = 10f
@@ -18,7 +18,9 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 		private const val MY_ENTITY_KILL_REWARD = -0.5f
 		private const val ENEMY_ENTITY_KILL_REWARD = 0.5f
 
-		private const val GOLD_FIND_REWARD = 0.02f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
+		private const val ENTITY_RECRUIT_REWARD = 0.02f
+
+		private const val GOLD_FIND_REWARD = 0.015f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
 	}
 
 	private lateinit var lastState: GameState
@@ -42,7 +44,10 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 	{
 		checkForWin(winner)?.let { return it }
 
-		return newState.getRewardForBaseAttacks() + newState.getRewardForEntityKills() + newState.getRewardForGoldMining()
+		return newState.getRewardForBaseAttacks() +
+			   newState.getRewardForEntityKills() +
+			   newState.getRewardForEntityRecruitment() +
+			   newState.getRewardForGoldMining()
 	}
 
 	private fun checkForWin(winner: Player.Side?) = winner?.let { if(it == mySide) WIN_REWARD else LOSS_REWARD }
@@ -70,6 +75,13 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 		val currentIds = allEntities.map { it.id }
 		val difference = lastState.allEntities.filterNot { it.id in currentIds }
 		return difference.map { getRewardForEntityKill(it.owner!!) }.sum()
+	}
+
+	private fun GameState.getRewardForEntityRecruitment(): Float
+	{
+		val previousIds = lastState.getPlayer(mySide).entities.map { it.id }
+		val difference = getPlayer(mySide).entities.filterNot { it.id in previousIds }
+		return difference.size * ENTITY_RECRUIT_REWARD
 	}
 
 	private fun GameState.getRewardForGoldMining(): Float

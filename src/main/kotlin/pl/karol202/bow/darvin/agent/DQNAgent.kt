@@ -70,7 +70,7 @@ class DQNAgent(private val playerSide: Player.Side,
 				val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
 				LearningSample(evaluation, errors)
 			}
-		}
+		}.reversed()
 	}
 
 	private fun checkLearningSamplesMemorySize()

@@ -191,13 +191,13 @@ class DarvinReinforcementNetwork(initialData: Data?)
 
 	private val network = reinforcementNetwork(Inputs.size) {
 		reinforcementLayer {
-			repeat(500) { reinforcementNeuron(TangensoidalActivation(1f)) }
+			repeat(500) { reinforcementNeuron(TangensoidalActivation(1f), 0.1f) }
 		}
 		reinforcementLayer {
-			repeat(50) { reinforcementNeuron(TangensoidalActivation(1f)) }
+			repeat(50) { reinforcementNeuron(TangensoidalActivation(1f), 0.1f) }
 		}
 		reinforcementLayer {
-			reinforcementNeuron(TangensoidalActivation(1f))
+			reinforcementNeuron(TangensoidalActivation(1f), 0.1f)
 		}
 	}.createNetworkWithData(initialData)
 

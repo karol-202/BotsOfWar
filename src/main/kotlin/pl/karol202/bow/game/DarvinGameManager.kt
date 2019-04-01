@@ -29,9 +29,9 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	{
 		private const val GAME_RESULT_CHECK_INTERVAL_MILLIS = 100L
 
-		private const val LEARN_RATE = 0.002f
+		private const val LEARN_RATE = 0.0001f
 		private const val DISCOUNT_FACTOR = 0.98f
-		private const val LEARNING_SAMPLES_PER_EPOCH = 100
+		private const val LEARNING_SAMPLES_PER_EPOCH = 500
 		private const val LEARNING_SAMPLES_MEMORY_SIZE = 5000
 	}
 
