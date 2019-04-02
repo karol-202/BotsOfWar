@@ -76,7 +76,7 @@ class DarvinBot<A : Agent>(val agent: A,
 
 		fun isCellAvailable(position: LocalPosition) = isCellWalkable(position) && !isCellOccupied(position)
 
-		fun isCellAnAvailableMine(position: LocalPosition) = currentState.getMineAt(position)?.isAvailableFor(side) == true
+		fun isCellAnAvailableMine(position: LocalPosition) = currentState.getMineAt(position)?.isAvailableFor(side, currentState) == true
 
 		fun isCellAMineAvailableFor(entityType: Entity.Type, position: LocalPosition) =
 				entityType == Entity.Type.WORKER && isCellAnAvailableMine(position)

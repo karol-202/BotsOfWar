@@ -49,4 +49,6 @@ data class GameState(val gameId: Int,
 	fun getMineAt(position: LocalPosition) = mines.singleOrNull { it.position == position }
 
 	fun getMineById(mineId: String) = mines.single { it.id == mineId }
+
+	fun getBaseAt(position: LocalPosition) = players.map { it.base }.singleOrNull { it.position == position }
 }

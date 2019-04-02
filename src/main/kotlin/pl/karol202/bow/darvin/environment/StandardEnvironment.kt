@@ -86,12 +86,12 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 
 	private fun GameState.getRewardForGoldMining(): Float
 	{
-		fun Mine.isMineMine() = owner.correspondingSide == mySide
+		fun isMineMine(mine: Mine) = mine.getOwner(this) == mySide
 
 		fun getGoldLoss(mine: Mine) = lastState.getMineById(mine.id).goldLeft - getMineById(mine.id).goldLeft
 
 		fun getRewardForMiningIn(mine: Mine) = (getGoldLoss(mine).toFloat() / mine.miningPerWorker) * GOLD_FIND_REWARD
 
-		return mines.filter { it.isMineMine() }.map { getRewardForMiningIn(it) }.sum()
+		return mines.filter { isMineMine(it) }.map { getRewardForMiningIn(it) }.sum()
 	}
 }

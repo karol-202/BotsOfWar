@@ -9,17 +9,17 @@ private fun <T> Iterable<T>.replace(old: T, new: T?) =
 
 private fun <T> Iterable<T>.remove(element: T) = filterNot { it == element }
 
-interface Action
+sealed class Action
 {
 	//Performs action assuming it is possible
-	fun perform(gameState: GameState): GameState
+	abstract fun perform(gameState: GameState): GameState
 
-	fun toModelAction(): ActionModel
+	abstract fun toModelAction(): ActionModel
 }
 
 sealed class Attack(private val attackerPlayer: Player,
                       val attacker: Entity,
-                      protected val victimPlayer: Player) : Action
+                      protected val victimPlayer: Player) : Action()
 {
 	override fun perform(gameState: GameState): GameState
 	{
@@ -77,7 +77,7 @@ class BaseAttack(attackerPlayer: Player,
 
 class Move(private val player: Player,
            val entity: Entity,
-           val direction: Direction) : Action
+           val direction: Direction) : Action()
 {
 	override fun perform(gameState: GameState): GameState
 	{
@@ -96,7 +96,7 @@ class Move(private val player: Player,
 }
 
 class Entrenchment(private val player: Player,
-                   val entity: Entity) : Action
+                   val entity: Entity) : Action()
 {
 	override fun perform(gameState: GameState): GameState
 	{
@@ -115,7 +115,7 @@ class Entrenchment(private val player: Player,
 }
 
 class Recruitment(private val player: Player,
-                  val entitySettings: Entity) : Action
+                  val entitySettings: Entity) : Action()
 {
 	override fun perform(gameState: GameState): GameState
 	{

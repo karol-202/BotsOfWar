@@ -64,7 +64,7 @@ private class OneOfNNNInput(override val size: Int,
 	{
 		val which = getValue(game, state, action, side)
 		(offset until offset + size).forEachIndexed { ordinal, arrayOffset ->
-			array[arrayOffset] = if(which == ordinal) 1f else 0f
+			array[arrayOffset] = if(which == ordinal) 1f else -1f
 		}
 	}
 }

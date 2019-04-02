@@ -6,6 +6,8 @@ import pl.karol202.bow.darvin.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player
+import pl.karol202.bow.util.EPSILON
+import pl.karol202.bow.util.equals
 
 //Deep Q-network agent
 class DQNAgent(private val playerSide: Player.Side,
@@ -66,10 +68,14 @@ class DQNAgent(private val playerSide: Player.Side,
 		return timestamps.reversed().flatMap { (evaluations, reward) ->
 			currentReward *= discountFactor
 			currentReward += reward
-			evaluations.map { evaluation ->
-				val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
-				LearningSample(evaluation, errors)
+			if(!currentReward.equals(target = 0f, epsilon = EPSILON))
+			{
+				evaluations.map { evaluation ->
+					val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
+					LearningSample(evaluation, errors)
+				}
 			}
+			else emptyList()
 		}.reversed()
 	}
 

@@ -32,152 +32,133 @@ class DarvinReinforcementNetwork(initialData: Data?)
 
 	private object Inputs
 	{
-		private const val MAP_WIDTH = 19
-		private const val MAP_HEIGHT = 14
-		private const val MINES = 4
-		private const val ENTITIES_MAX = 20
+		private const val MAP_AREA_RANGE = 7 // -------*-------
 
 		val size get() = root.size
 		private val root = compoundInput {
-			settings()
-			map()
 			players()
-			mines()
-			bases()
-			entities()
+			relativeMap()
+
 			action()
-		}
-
-		private fun InputContext.settings()
-		{
-			scalarInput { game, _, _, _ -> game.settings.miningPerTurn inLinearRange 0f..100f }
-			Entity.Type.values().forEach { type ->
-				fun setting(settingSelector: Entity.() -> Float) =
-						scalarInput { game, _, _, _ -> game.settings.entitySettings.getValue(type).settingSelector() }
-
-				setting { hp inLinearRange 0f..200f }
-				setting { actionPoints inLinearRange 0f..10f }
-				setting { rangeOfAttack inLinearRange 0f..5f }
-				setting { damage inLinearRange 0f..50f }
-				setting { cost inLinearRange 0f..500f }
-			}
-		}
-
-		private fun InputContext.map()
-		{
-			repeat(MAP_HEIGHT) { y ->
-				repeat(MAP_WIDTH) { x ->
-					val position = LocalPosition(x, y)
-					scalarInput { game, _, _, _ -> if(game.isPositionWalkable(position)) 1f else -1f }
-				}
-			}
-		}
-		
-		private fun InputContext.mines()
-		{
-			repeat(MINES) { mineIndex ->
-				positionInput { _, state, _, _ -> state.mines[mineIndex].position }
-				scalarInput { _, state, _, _ -> state.mines[mineIndex].goldLeft inLinearRange 0f..3000f }
-				scalarInput { _, state, _, _ -> state.mines[mineIndex].miningPerWorker inLinearRange 0f..50f }
-				scalarInput { _, state, _, _ -> state.mines[mineIndex].workersNumber inLinearRange 0f..10f }
-				scalarInput { _, state, _, side -> when(state.mines[mineIndex].owner.correspondingSide) {
-					side -> 1f
-					side.opposite -> -1f
-					else -> 0f
-				} }
-			}
 		}
 
 		private fun InputContext.players()
 		{
-			fun player(sideSelector: Player.Side.() -> Player.Side) =
-					scalarInput { _, state, _, side -> state.getPlayer(side.sideSelector()).gold inLinearRange 0f..2000f }
+			fun player(sideSelector: Player.Side.() -> Player.Side)
+			{
+				scalarInput { _, state, _, side -> state.getPlayer(side.sideSelector()).gold inLinearRange 0f..2000f }
+				scalarInput { _, state, _, side -> state.getPlayer(side.sideSelector()).base.hp inLinearRange 0f..1000f }
+			}
 
 			player { this }
 			player { opposite }
 		}
-		
-		private fun InputContext.bases()
-		{
-			fun base(sideSelector: Player.Side.() -> Player.Side)
-			{
-				positionInput { _, state, _, side -> state.getPlayer(side.sideSelector()).base.position }
-				scalarInput { _, state, _, side -> state.getPlayer(side.sideSelector()).base.hp inLinearRange 0f..1000f }
-			}
 
-			base { this }
-			base { opposite }
+		private fun InputContext.relativeMap()
+		{
+			for(x in -MAP_AREA_RANGE..MAP_AREA_RANGE)
+			{
+				for(y in -MAP_AREA_RANGE..MAP_AREA_RANGE) relativeMapCell(LocalPosition(x, y))
+			}
 		}
 
-		private fun InputContext.entities()
+		private fun InputContext.relativeMapCell(offset: LocalPosition)
 		{
-			fun entity(entitySelector: (GameState, Player.Side) -> Entity?)
+			fun globalPosition(state: GameState, action: Action, side: Player.Side) = when(action)
 			{
-				oneOfNInput(Entity.Type.values().size + 1) { _, state, _, side ->
-					entitySelector(state, side)?.type?.ordinal?.plus(1) ?: 0
-				}
-				positionInput { _, state, _, side -> entitySelector(state, side)?.position ?: LocalPosition.zero }
-				scalarInput { _, state, _, side -> (entitySelector(state, side)?.hp ?: 0) inLinearRange 0f..200f }
-				scalarInput { _, state, _, side -> (entitySelector(state, side)?.actionPoints ?: 0) inLinearRange 0f..10f }
-				scalarInput { _, state, _, side -> (entitySelector(state, side)?.rangeOfAttack ?: 0) inLinearRange 0f..5f }
-				scalarInput { _, state, _, side -> (entitySelector(state, side)?.damage ?: 0) inLinearRange 0f..50f }
-				scalarInput { _, state, _, side -> (entitySelector(state, side)?.cost ?: 0) inLinearRange 0f..500f }
-			}
+				is Attack -> action.attacker.position
+				is Move -> action.entity.position
+				is Entrenchment -> action.entity.position
+				is Recruitment -> state.getPlayer(side).base.position
+			} + offset
 
-			repeat(ENTITIES_MAX) { entityIndex ->
-				entity { state, side -> state.getPlayer(side).entities.getOrNull(entityIndex) }
-				entity { state, side -> state.getPlayer(side.opposite).entities.getOrNull(entityIndex) }
+			scalarInput { game, state, action, side -> // Is walkable (only map)
+				if(game.isPositionWalkable(globalPosition(state, action, side))) 1f else -1f
+			}
+			scalarInput { _, state, action, side -> // Mine (presence and availability)
+				state.getMineAt(globalPosition(state, action, side))?.let { mine ->
+					val goldValue = mine.goldLeft inLinearRange 0f..3000f
+					goldValue * if(mine.isAvailableFor(side, state)) 1f else -1f
+				} ?: 0f
+			}
+			scalarInput { _, state, action, side -> // Base
+				when(state.getBaseAt(globalPosition(state, action, side))?.owner)
+				{
+					side -> 1f
+					side.opposite -> -1f
+					else -> 0f
+				}
+			}
+			oneOfNInput(Entity.Type.values().size + 1) { _, state, action, side -> // Entity (type)
+				val types = state.getEntitiesAt(globalPosition(state, action, side)).map { it.type }.distinct()
+				if(types.isNotEmpty()) types.single().ordinal.plus(1) else 0
+			}
+			scalarInput { _, state, action, side -> // Entity (hp)
+				state.getEntitiesAt(globalPosition(state, action, side)).sumBy { it.hp } inLinearRange 0f..150f
+			}
+			scalarInput { _, state, action, side -> // Entity (max possible damage)
+				state.getEntitiesAt(globalPosition(state, action, side))
+						.sumBy { it.damage * it.actionPoints } inLinearRange 0f..50f
+			}
+			scalarInput { _, state, action, side -> // Is entity a victim of potential attack
+				if((action as? EntityAttack)?.victim?.position == globalPosition(state, action, side)) 1f else 0f
 			}
 		}
 
 		private fun InputContext.action()
 		{
-			oneOfNInput(ActionModel.Type.values().size) { _, _, action, _ -> action.toModelAction().type.ordinal }
+			oneOfNInput(5) { _, _, action, _ -> when(action)
+			{
+				is EntityAttack -> 0
+				is BaseAttack -> 1
+				is Move -> 2
+				is Entrenchment -> 3
+				is Recruitment -> 4
+			} }
+			actionExecutor()
 
-			actionAttack()
 			actionMove()
-			actionEntrenchment()
 			actionRecruitment()
 		}
 
-		private fun InputContext.actionAttack()
+		private fun InputContext.actionExecutor()
 		{
-			oneOfNInput(ENTITIES_MAX + 1) { _, state, action, side ->
-				(action as? Attack)?.let { attack -> state.getPlayer(side).entities.indexOf(attack.attacker) + 1 } ?: 0
+			fun executorEntity(action: Action) = when(action)
+			{
+				is Attack -> action.attacker
+				is Move -> action.entity
+				is Entrenchment -> action.entity
+				is Recruitment -> null
 			}
-			oneOfNInput(ENTITIES_MAX + 2) { _, state, action, side ->
-				(action as? Attack)?.let { attack ->
-					when(attack)
-					{
-						is EntityAttack -> state.getPlayer(side).entities.indexOf(attack.victim)
-						is BaseAttack -> 1
-					}
-				} ?: 0
+
+			oneOfNInput(Entity.Type.values().size + 1) { _, _, action, _ ->
+				executorEntity(action)?.type?.ordinal?.plus(1) ?: 0
 			}
+			scalarInput { _, _, action, _ -> (executorEntity(action)?.hp ?: 0) inLinearRange 0f..150f }
+			scalarInput { _, _, action, _ -> (executorEntity(action)?.actionPoints ?: 0) inLinearRange 0f..10f }
+			scalarInput { _, _, action, _ -> (executorEntity(action)?.rangeOfAttack ?: 0) inLinearRange 0f..5f }
+			scalarInput { _, _, action, _ -> (executorEntity(action)?.damage ?: 0) inLinearRange 0f..50f }
 		}
 
 		private fun InputContext.actionMove()
 		{
-			oneOfNInput(ENTITIES_MAX + 1) { _, state, action, side ->
-				(action as? Move)?.let { move -> state.getPlayer(side).entities.indexOf(move.entity) + 1 } ?: 0
-			}
 			oneOfNInput(Direction.values().size + 1) { _, _, action, _ ->
-				(action as? Move)?.let { move -> move.direction.ordinal + 1 } ?: 0
-			}
-		}
-
-		private fun InputContext.actionEntrenchment()
-		{
-			oneOfNInput(ENTITIES_MAX + 1) { _, state, action, side ->
-				(action as? Entrenchment)?.let { entrenchment -> state.getPlayer(side).entities.indexOf(entrenchment.entity) + 1 } ?: 0
+				(action as? Move)?.direction?.ordinal?.plus(1) ?: 0
 			}
 		}
 
 		private fun InputContext.actionRecruitment()
 		{
+			fun recruitedEntity(action: Action) = (action as? Recruitment)?.entitySettings
+
 			oneOfNInput(Entity.Type.values().size + 1) { _, _, action, _ ->
-				(action as? Recruitment)?.entitySettings?.type?.ordinal?.plus(1) ?: 0
+				recruitedEntity(action)?.type?.ordinal?.plus(1) ?: 0
 			}
+			scalarInput { _, _, action, _ -> (recruitedEntity(action)?.hp ?: 0) inLinearRange 0f..150f }
+			scalarInput { _, _, action, _ -> (recruitedEntity(action)?.actionPoints ?: 0) inLinearRange 0f..10f }
+			scalarInput { _, _, action, _ -> (recruitedEntity(action)?.rangeOfAttack ?: 0) inLinearRange 0f..5f }
+			scalarInput { _, _, action, _ -> (recruitedEntity(action)?.damage ?: 0) inLinearRange 0f..50f }
+			scalarInput { _, _, action, _ -> (recruitedEntity(action)?.cost ?: 0) inLinearRange 0f..500f }
 		}
 
 		private infix fun Int.inLinearRange(range: FloatRange) = this.toFloat().inLinearRange(range)

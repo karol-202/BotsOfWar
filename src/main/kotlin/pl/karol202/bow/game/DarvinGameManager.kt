@@ -31,8 +31,8 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 		private const val LEARN_RATE = 0.0001f
 		private const val DISCOUNT_FACTOR = 0.98f
-		private const val LEARNING_SAMPLES_PER_EPOCH = 500
-		private const val LEARNING_SAMPLES_MEMORY_SIZE = 5000
+		private const val LEARNING_SAMPLES_PER_EPOCH = 2000
+		private const val LEARNING_SAMPLES_MEMORY_SIZE = 20000
 	}
 
 	data class Data(val agents: Map<Player.Side, DQNAgent.Data>)
