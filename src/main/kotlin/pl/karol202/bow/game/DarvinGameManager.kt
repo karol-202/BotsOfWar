@@ -19,7 +19,7 @@ interface DarvinGameListener
 	//Indicates stop without teaching in case of not working of result getting coroutine
 	fun onReset()
 
-	fun onStopAndTeach(data: DarvinGameManager.Data)
+	fun onDataUpdate(data: DarvinGameManager.Data)
 }
 
 class DarvinGameManager(private val coroutineScope: CoroutineScope,
@@ -100,20 +100,19 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 	private fun stopGameAndTeach(winner: Player.Side)
 	{
-		game?.let { notifyBotsAboutEndOfGame(it, winner) }
+		notifyBotsAboutEndOfGame(winner)
 		saveNetworksData()
-		gameListener?.onStopAndTeach(Data(agentsData))
 		stopGame()
 	}
 
-	private fun notifyBotsAboutEndOfGame(game: Game, winner: Player.Side)
-	{
+	private fun notifyBotsAboutEndOfGame(winner: Player.Side) = game?.let { game ->
 		bots.forEach { _, bot -> bot.endGame(game, winner) }
 	}
 
 	private fun saveNetworksData()
 	{
 		bots.forEach { side, bot -> agentsData[side] = bot.agent.getData() }
+		gameListener?.onDataUpdate(Data(agentsData))
 	}
 
 	private fun stopGame()
@@ -125,5 +124,11 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	fun setGameListener(gameListener: DarvinGameListener)
 	{
 		this.gameListener = gameListener
+	}
+
+	fun removeAgentData(side: Player.Side)
+	{
+		agentsData.remove(side)
+		gameListener?.onDataUpdate(Data(agentsData))
 	}
 }
