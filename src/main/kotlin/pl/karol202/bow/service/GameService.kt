@@ -21,7 +21,9 @@ class GameService : DarvinGameListener
 {
 	companion object
 	{
-		const val DATA_FILE_PATH = "darvin.dat"
+		private const val DATA_FILE_PATH = "darvin.dat"
+
+		var serverAddress = "http://192.168.253.121:8080"
 	}
 
 	private val coroutineJob = Job()
@@ -50,6 +52,16 @@ class GameService : DarvinGameListener
 	fun removeAgentData(side: Player.Side)
 	{
 		gameManager.removeAgentData(side)
+	}
+
+	fun swapAgentData()
+	{
+		gameManager.swapAgentsData()
+	}
+
+	fun setLearningEnabled(enabled: Boolean)
+	{
+		gameManager.learningEnabled = enabled
 	}
 
 	@PreDestroy

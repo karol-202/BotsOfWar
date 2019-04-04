@@ -10,11 +10,6 @@ import pl.karol202.bow.service.GameService
 @RestController
 class BotController
 {
-	companion object
-	{
-		const val SERVER_ADDRESS = "http://localhost:8080"
-	}
-
 	@Autowired
 	private lateinit var gameService: GameService
 

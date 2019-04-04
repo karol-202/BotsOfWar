@@ -12,6 +12,18 @@ class AdminController
 	@Autowired
 	private lateinit var gameService: GameService
 
+	@RequestMapping("/admin/setServerAddress")
+	fun setServerAddress(address: String)
+	{
+		GameService.serverAddress = address
+	}
+
 	@RequestMapping("/admin/removeAgentData")
 	fun removeAgentData(side: Player.Side) = gameService.removeAgentData(side)
+
+	@RequestMapping("/admin/swapAgentData")
+	fun swapAgentData() = gameService.swapAgentData()
+
+	@RequestMapping("/admin/setLearningEnabled")
+	fun setLearningEnabled(enabled: Boolean) = gameService.setLearningEnabled(enabled)
 }

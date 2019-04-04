@@ -38,8 +38,8 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	data class Data(val agents: Map<Player.Side, DQNAgent.Data>)
 
 	private val agentsData = initialData?.agents?.toMutableMap() ?: mutableMapOf()
-
 	private var gameListener: DarvinGameListener? = null
+	var learningEnabled = true
 
 	private var game: Game? = null
 	private val bots = mutableMapOf<Player.Side, DarvinBot<DQNAgent>>()
@@ -100,8 +100,11 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 	private fun stopGameAndTeach(winner: Player.Side)
 	{
-		notifyBotsAboutEndOfGame(winner)
-		saveNetworksData()
+		if(learningEnabled)
+		{
+			notifyBotsAboutEndOfGame(winner)
+			saveNetworksData()
+		}
 		stopGame()
 	}
 
@@ -121,14 +124,21 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 		bots.clear()
 	}
 
-	fun setGameListener(gameListener: DarvinGameListener)
-	{
-		this.gameListener = gameListener
-	}
-
 	fun removeAgentData(side: Player.Side)
 	{
 		agentsData.remove(side)
 		gameListener?.onDataUpdate(Data(agentsData))
+	}
+
+	fun swapAgentsData()
+	{
+		val newData = agentsData.mapKeys { it.key.opposite }
+		agentsData.clear()
+		agentsData.putAll(newData)
+	}
+
+	fun setGameListener(gameListener: DarvinGameListener)
+	{
+		this.gameListener = gameListener
 	}
 }
