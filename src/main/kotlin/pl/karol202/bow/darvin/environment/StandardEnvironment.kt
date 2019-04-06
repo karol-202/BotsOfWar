@@ -15,12 +15,12 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 		private const val MY_BASE_ATTACK_REWARD = -10f
 		private const val ENEMY_BASE_ATTACK_REWARD = 10f
 
-		private const val MY_ENTITY_KILL_REWARD = -0.5f
-		private const val ENEMY_ENTITY_KILL_REWARD = 0.5f
+		private const val MY_ENTITY_KILL_REWARD = -2f
+		private const val ENEMY_ENTITY_KILL_REWARD = 2f
 
-		private const val ENTITY_RECRUIT_REWARD = 0.02f
+		private const val ENTITY_RECRUIT_REWARD = 0.5f
 
-		private const val GOLD_FIND_REWARD = 0.015f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
+		private const val GOLD_FIND_REWARD = 0.3f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
 	}
 
 	private lateinit var lastState: GameState

@@ -6,7 +6,7 @@ import pl.karol202.bow.model.GameState
 
 interface Agent
 {
-	fun evaluateAction(game: Game, state: GameState, action: Action): Float
+	fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
 
 	fun receiveReward(reward: Float)
 

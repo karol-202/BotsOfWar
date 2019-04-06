@@ -9,7 +9,7 @@ class RandomAgent(seed: Int) : Agent
 {
 	private val random = Random(seed)
 
-	override fun evaluateAction(game: Game, state: GameState, action: Action) = (random.nextFloat() * 2) - 1
+	override fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>) = actions.random(random)
 
 	override fun receiveReward(reward: Float) { }
 

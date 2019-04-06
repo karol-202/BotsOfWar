@@ -29,8 +29,10 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 	{
 		private const val GAME_RESULT_CHECK_INTERVAL_MILLIS = 100L
 
+		private const val ACTION_THRESHOLD = 0f
 		private const val LEARN_RATE = 0.0001f
 		private const val DISCOUNT_FACTOR = 0.98f
+		private const val EPSILON = 0.1f
 		private const val LEARNING_SAMPLES_PER_EPOCH = 2000
 		private const val LEARNING_SAMPLES_MEMORY_SIZE = 20000
 	}
@@ -91,8 +93,10 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 	private fun createNewBot(side: Player.Side) =
 			DarvinBot(DQNAgent(side,
+			                   ACTION_THRESHOLD,
 			                   LEARN_RATE,
 			                   DISCOUNT_FACTOR,
+			                   EPSILON,
 			                   LEARNING_SAMPLES_PER_EPOCH,
 			                   LEARNING_SAMPLES_MEMORY_SIZE,
 			                   agentsData[side]),
@@ -100,11 +104,8 @@ class DarvinGameManager(private val coroutineScope: CoroutineScope,
 
 	private fun stopGameAndTeach(winner: Player.Side)
 	{
-		if(learningEnabled)
-		{
-			notifyBotsAboutEndOfGame(winner)
-			saveNetworksData()
-		}
+		if(learningEnabled) notifyBotsAboutEndOfGame(winner)
+		saveNetworksData()
 		stopGame()
 	}
 

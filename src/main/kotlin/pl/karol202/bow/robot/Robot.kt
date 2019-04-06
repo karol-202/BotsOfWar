@@ -11,7 +11,7 @@ class Robot
 {
 	@Autowired
 	private lateinit var gameService: GameService
-	private val logger: Logger = LoggerFactory.getLogger(GameService::class.java)
+	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
 	//Main entry point for robot
 	fun start()

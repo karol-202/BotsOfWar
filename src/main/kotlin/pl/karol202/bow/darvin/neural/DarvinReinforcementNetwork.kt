@@ -202,7 +202,7 @@ class DarvinReinforcementNetwork(initialData: Data?)
 	}
 
 	fun calculateErrors(reward: Float, output: Float) =
-			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward * output)) // Network has 1 output
+			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward - output)) // Network has 1 output
 
 	fun learn(evaluation: DQNAgent.Evaluation, allErrors: List<FloatArray>, learnRate: Float)
 	{

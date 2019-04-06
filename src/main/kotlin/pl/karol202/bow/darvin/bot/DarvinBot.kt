@@ -9,11 +9,6 @@ import pl.karol202.bow.model.*
 class DarvinBot<A : Agent>(val agent: A,
                            private val environment: Environment) : Bot
 {
-	companion object
-	{
-		private const val ACTION_THRESHOLD = 0f
-	}
-
 	private lateinit var game: Game
 	private lateinit var currentState: GameState
 	private lateinit var side: Player.Side
@@ -63,8 +58,7 @@ class DarvinBot<A : Agent>(val agent: A,
 	private fun playOnceWithEntity(entity: Entity): Action?
 	{
 		val possibilities = getPossibleMoves(entity) + getPossibleAttacks(entity) + getPossibleEntrenchment(entity)
-		val evaluatedPossibilities = possibilities.associateWith { evaluateAction(it) }
-		val bestAction = evaluatedPossibilities.maxBy { it.value }?.takeIf { it.value >= ACTION_THRESHOLD }?.key
+		val bestAction = possibilities.pickAction()
 		return bestAction?.also { currentState = bestAction.perform(currentState) }
 	}
 
@@ -122,8 +116,7 @@ class DarvinBot<A : Agent>(val agent: A,
 
 	private fun recruit(): Recruitment?
 	{
-		val possibleRecruitments = getPossibleRecruitments().associateWith { evaluateAction(it) }
-		val recruitment = possibleRecruitments.maxBy { it.value }?.takeIf { it.value >= ACTION_THRESHOLD }?.key
+		val recruitment = getPossibleRecruitments().pickAction()
 		return recruitment?.also { currentState = it.perform(currentState) }
 	}
 
@@ -133,7 +126,7 @@ class DarvinBot<A : Agent>(val agent: A,
 
 	private fun isBaseOccupied() = currentState.getEntitiesAt(player.base.position).isNotEmpty()
 
-	private fun evaluateAction(action: Action): Float = agent.evaluateAction(game, currentState, action)
+	private fun <A : Action> List<A>.pickAction() = agent.pickAction(game, currentState, this)
 
 	override fun endGame(game: Game, winner: Player.Side)
 	{

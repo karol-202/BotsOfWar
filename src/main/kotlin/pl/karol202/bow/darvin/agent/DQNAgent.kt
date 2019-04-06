@@ -1,18 +1,21 @@
 package pl.karol202.bow.darvin.agent
 
 import com.google.gson.annotations.SerializedName
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import pl.karol202.bow.darvin.Action
 import pl.karol202.bow.darvin.neural.DarvinReinforcementNetwork
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player
-import pl.karol202.bow.util.EPSILON
-import pl.karol202.bow.util.equals
+import kotlin.random.Random
 
 //Deep Q-network agent
 class DQNAgent(private val playerSide: Player.Side,
+               private val actionThreshold: Float,
                private val learnRate: Float,
                private val discountFactor: Float,
+               private val epsilon: Float,
                private val learningSamplesPerEpoch: Int,
                private val learningSamplesMemorySize: Int,
                initialData: Data?) : Agent
@@ -30,6 +33,7 @@ class DQNAgent(private val playerSide: Player.Side,
 	                 @SerializedName("a") val allOutputs: List<FloatArray>, // Including final output
 	                 @SerializedName("f") val finalOutput: Float)
 
+	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 	private val network = DarvinReinforcementNetwork(initialData?.networkData)
 	private val learningSamples = initialData?.learningSamples?.toMutableList() ?: mutableListOf()
 
@@ -37,8 +41,23 @@ class DQNAgent(private val playerSide: Player.Side,
 	private var currentEvaluations = mutableListOf<Evaluation>()
 	private var currentReward = 0f
 
-	override fun evaluateAction(game: Game, state: GameState, action: Action) =
-			network.evaluateAndGetAllData(game, state, action, playerSide).also { currentEvaluations.add(it) }.finalOutput
+	override fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
+	{
+		val evaluatedActions = evaluateActions(game, state, actions)
+		val pickedAction =
+				if(shouldPickRandomAction()) evaluatedActions.takeIf { it.isNotEmpty() }?.random()
+				else evaluatedActions.maxBy { it.second.finalOutput }?.takeIf { it.second.finalOutput > actionThreshold }
+		logger.debug("$playerSide picked ${pickedAction?.first?.javaClass?.simpleName}: ${pickedAction?.second?.finalOutput}")
+		return pickedAction?.also { currentEvaluations.add(it.second) }?.first
+	}
+
+	private fun shouldPickRandomAction() = Random.nextFloat() < epsilon
+
+	private fun <A : Action> evaluateActions(game: Game, state: GameState, actions: List<A>) =
+			actions.map { action -> action to evaluateAction(game, state, action) }
+
+	private fun evaluateAction(game: Game, state: GameState, action: Action) =
+			network.evaluateAndGetAllData(game, state, action, playerSide)
 
 	override fun receiveReward(reward: Float)
 	{
@@ -68,14 +87,10 @@ class DQNAgent(private val playerSide: Player.Side,
 		return timestamps.reversed().flatMap { (evaluations, reward) ->
 			currentReward *= discountFactor
 			currentReward += reward
-			if(!currentReward.equals(target = 0f, epsilon = EPSILON))
-			{
-				evaluations.map { evaluation ->
-					val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
-					LearningSample(evaluation, errors)
-				}
+			evaluations.map { evaluation ->
+				val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
+				LearningSample(evaluation, errors)
 			}
-			else emptyList()
 		}.reversed()
 	}
 
@@ -89,10 +104,6 @@ class DQNAgent(private val playerSide: Player.Side,
 
 	private fun teachNetwork()
 	{
-		/*learningSamples.mapIndexed { i, sample -> i to sample }.shuffled().take(learningSamplesPerEpoch).forEach { (i, sample) ->
-			val factor = (0f..(learningSamples.size.toFloat() - 1f)).invertedLerp(i.toFloat())
-			teachNetworkOneSample(sample, factor)
-		}*/
 		learningSamples.shuffled().take(learningSamplesPerEpoch).forEach { sample ->
 			teachNetworkOneSample(sample)
 		}

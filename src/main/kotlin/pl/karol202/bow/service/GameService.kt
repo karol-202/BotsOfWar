@@ -23,7 +23,7 @@ class GameService : DarvinGameListener
 	{
 		private const val DATA_FILE_PATH = "darvin.dat"
 
-		var serverAddress = "http://192.168.253.121:8080"
+		var serverAddress = "http://localhost:8080"
 	}
 
 	private val coroutineJob = Job()
@@ -31,7 +31,7 @@ class GameService : DarvinGameListener
 
 	private val dataSerializer = DataSerializer(File(DATA_FILE_PATH))
 	private val gameManager = DarvinGameManager(coroutineScope, dataSerializer.loadData())
-	private val logger: Logger = LoggerFactory.getLogger(GameService::class.java)
+	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
 	@PostConstruct
 	fun onStart()
