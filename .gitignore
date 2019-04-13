@@ -1,6 +1,7 @@
 .gradle
 .idea
 build
+data
 
 *.iml
 local.properties

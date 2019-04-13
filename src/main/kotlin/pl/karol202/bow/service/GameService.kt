@@ -13,7 +13,6 @@ import pl.karol202.bow.darvin.neural.DQNetwork
 import pl.karol202.bow.game.DarvinGameListener
 import pl.karol202.bow.game.StandardGameManager
 import pl.karol202.bow.model.GameState
-import pl.karol202.bow.model.Order
 import pl.karol202.bow.model.Player
 import pl.karol202.bow.util.DataSerializer
 import pl.karol202.bow.util.randomOrNull
@@ -21,7 +20,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
-import kotlin.system.measureTimeMillis
 
 private typealias DarvinBotWithDQNAgent = DarvinBot<DQNAgent<AxonDQNetworkData>, DQNAgentData>
 
@@ -39,26 +37,14 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 		var serverAddress = "http://localhost:8080"
 	}
 
-	data class Params(val actionThreshold: Float,
-	                  val learnRate: Float,
-	                  val discountFactor: Float,
-	                  val epsilon: Float,
-	                  val learningSamplesLimit: Int,
-	                  val botsDirectory: String,
-	                  val samplesDirectory: String,
-	                  val allowBotDuplication: Boolean,
-	                  val botBindings: Map<Player.Side, String>)
-	{
-		constructor(gameService: GameService) : this(gameService.actionThreshold,
-		                                             gameService.learnRate,
-		                                             gameService.discountFactor,
-		                                             gameService.epsilon,
-		                                             gameService.learningSamplesLimit,
-		                                             gameService.botsDirectory,
-		                                             gameService.samplesDirectory,
-		                                             gameService.allowBotDuplication,
-		                                             gameService.botBindings)
-	}
+	data class Params(val actionThreshold: Float = 0f,
+	                  val discountFactor: Float = 0.98f,
+	                  val epsilon: Float = 0.1f,
+	                  val learningSamplesLimit: Int = 50000,
+	                  val botsDirectory: String = "default",
+	                  val samplesDirectory: String = "default",
+	                  val allowBotDuplication: Boolean = false,
+	                  val botBindings: Map<Player.Side, String> = emptyMap())
 
 	/*
 	GameService saves data in 3 forms:
@@ -73,70 +59,30 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 
 	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 	private val dataSerializer = DataSerializer()
-	private val initialParams = dataSerializer.loadGameServiceParams()
-
-	var actionThreshold = initialParams?.actionThreshold ?: 0f
-		set(value)
-		{
-			field = value
-			saveParams()
-		}
-	var learnRate = initialParams?.learnRate ?: 0.0001f
-		set(value)
-		{
-			field = value
-			saveParams()
-		}
-	var discountFactor = initialParams?.discountFactor ?: 0.98f
-		set(value)
-		{
-			field = value
-			saveParams()
-		}
-	var epsilon = initialParams?.epsilon ?: 0.1f
-		set(value)
-		{
-			field = value
-			saveParams()
-		}
-	var learningSamplesLimit = initialParams?.learningSamplesLimit ?: 50000
-		set(value)
-		{
-			field = value
-			saveParams()
-			ensureLearningSamplesAmount()
-		}
-	var botsDirectory = initialParams?.botsDirectory ?: "default"
-		set(value)
-		{
-			field = value
-			saveParams()
-			reloadBotsData()
-		}
-	var samplesDirectory = initialParams?.samplesDirectory ?: "default"
-		set(value)
-		{
-			field = value
-			saveParams()
-			reloadSamples()
-		}
-	var allowBotDuplication = initialParams?.allowBotDuplication ?: false
-		set(value)
-		{
-			field = value
-			saveParams()
-		}
-	var botBindings = initialParams?.botBindings ?: emptyMap()
-		set(value)
-		{
-			field = value
-			saveParams()
-		}
-
 	private val gameManager = StandardGameManager(coroutineScope) { side -> createBotFromRandomData(side) }
+
+	var params = dataSerializer.loadGameServiceParams() ?: Params()
+		set(value)
+		{
+			val oldParams = field
+			field = value
+			saveParams()
+			if(learningSamplesLimit != oldParams.learningSamplesLimit) ensureLearningSamplesAmount()
+			if(botsDirectory != oldParams.botsDirectory) reloadBotsData()
+			if(samplesDirectory != oldParams.samplesDirectory) reloadSamples()
+		}
 	private var botsData = dataSerializer.loadBots(botsDirectory)
-	private var learningSamples = dataSerializer.loadSamples(samplesDirectory, learningSamplesLimit)// Newest samples in the end
-	private var busyBots = emptyList<String>()
+	private var learningSamples = dataSerializer.loadSamples(samplesDirectory, learningSamplesLimit) // Newest samples in the end
+	private var busyBots = emptyMap<String, DarvinBotWithDQNAgent>()
+
+	private val actionThreshold get() = params.actionThreshold
+	private val discountFactor get() = params.discountFactor
+	private val epsilon get() = params.epsilon
+	private val learningSamplesLimit get() = params.learningSamplesLimit
+	private val botsDirectory get() = params.botsDirectory
+	private val samplesDirectory get() = params.samplesDirectory
+	private val allowBotDuplication get() = params.allowBotDuplication
+	private val botBindings get() = params.botBindings
 
 	val botsNames get() = botsData.map { it.key }
 	val samplesAmount get() = learningSamples.size
@@ -156,9 +102,10 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 				botsData.filterKeys { allowBotDuplication || it !in busyBots }.entries.randomOrNull()?.toPair()
 
 		val (name, botData) = getBoundBotData() ?: getRandomBotData() ?: throw Exception("No bots")
+		val bot = createBot(side, botData)
 		logger.info("Using bot $name for $side.")
-		busyBots = busyBots + name
-		return createBot(side, botData)
+		busyBots = busyBots + (name to bot)
+		return bot
 	}
 
 	private fun createBot(side: Player.Side, data: DarvinBotData) =
@@ -169,14 +116,8 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 
 	private fun createNetwork(data: AxonDQNetworkData) = AxonDQNetwork(data)
 
-	fun updateStateAndGetOrder(gameState: GameState.GameStateData): Order
-	{
-		val startTime = System.currentTimeMillis()
-		return gameManager.updateStateAndGetOrder(gameState).also {
-			val elapsedTime = System.currentTimeMillis() - startTime
-			logger.debug("Calculated response in $elapsedTime ms")
-		}
-	}
+	fun updateStateAndGetOrder(gameState: GameState.GameStateData) =
+			measureTimeAndLog("Calculated response") { gameManager.updateStateAndGetOrder(gameState) }
 
 	override fun onGameStart()
 	{
@@ -191,20 +132,21 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	override fun onReset()
 	{
 		logger.warn("Game restarted without teaching")
-		busyBots = emptyList()
+		busyBots = emptyMap()
 	}
 
 	override fun onGameEnd(bots: List<DarvinBotWithDQNAgent>)
 	{
 		logger.info("Game ended")
-		busyBots = emptyList()
 		bots.forEach { bot -> bot.calculateAndSaveSamples() }
+		busyBots = emptyMap()
 	}
 
 	private fun DarvinBotWithDQNAgent.calculateAndSaveSamples()
 	{
 		val samples = agent.calculateLearningSamples(discountFactor)
-		saveSamples(samples)
+		val name = busyBots.entries.singleOrNull { it.value === this }?.key
+		saveSamples(samples, name)
 
 		learningSamples = learningSamples + samples
 		ensureLearningSamplesAmount()
@@ -214,6 +156,16 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	{
 		val exceedingSamples = learningSamples.size - learningSamplesLimit
 		if(exceedingSamples > 0) learningSamples = learningSamples.drop(exceedingSamples)
+	}
+
+	private fun saveSamples(samples: List<DQNAgent.LearningSample>, botName: String?) =
+			measureTimeAndLog("Saved samples") {
+				fun createSamplesFilename() = "${SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(Date())} $botName"
+				dataSerializer.saveSamples(samples, samplesDirectory, createSamplesFilename())
+			}
+
+	private fun saveBotData(botData: DarvinBotData, name: String) = measureTimeAndLog("Saved bot data") {
+		dataSerializer.saveBot(botData, botsDirectory, name)
 	}
 
 	private fun reloadSamples()
@@ -228,25 +180,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 
 	private fun saveParams()
 	{
-		dataSerializer.saveGameServiceData(Params(this))
-	}
-
-	private fun saveBotData(botData: DarvinBotData, name: String)
-	{
-		val elapsedTime = measureTimeMillis {
-			dataSerializer.saveBot(botData, botsDirectory, name)
-		}
-		logger.debug("Saved bot data in $elapsedTime ms")
-	}
-
-	private fun saveSamples(samples: List<DQNAgent.LearningSample>)
-	{
-		fun createSamplesFilename() = SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(Date())
-
-		val elapsedTime = measureTimeMillis {
-			dataSerializer.saveSamples(samples, samplesDirectory, createSamplesFilename())
-		}
-		logger.debug("Saved samples in $elapsedTime ms")
+		dataSerializer.saveGameServiceData(params)
 	}
 
 	// API FUNCTIONS
@@ -262,16 +196,16 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 		return true
 	}
 
-	fun teach(samplesAmount: Int)
+	fun teach(learnRate: Float, samplesAmount: Int, botsNames: List<String>?)
 	{
-		fun DQNetwork<*>.teach(samplesAmount: Int)
-		{
+		fun DQNetwork<*>.teach(samplesAmount: Int) = measureTimeAndLog("Taught network") {
 			learningSamples.shuffled().take(samplesAmount).forEach { sample ->
 				learn(sample.evaluation, sample.allErrors, learnRate)
 			}
 		}
 
 		botsData = botsData.mapValues { (name, botData) ->
+			if(botsNames != null && name !in botsNames) return@mapValues botData
 			val agentData = botData.agentData
 			val networkData = agentData.networkData
 			val network = AxonDQNetwork(networkData)
@@ -284,5 +218,11 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	fun onDestroy()
 	{
 		coroutineJob.cancel()
+	}
+
+	private fun <T> measureTimeAndLog(message: String, block: () -> T): T
+	{
+		val startTime = System.currentTimeMillis()
+		return block().also { logger.debug("$message in ${System.currentTimeMillis() - startTime} ms") }
 	}
 }

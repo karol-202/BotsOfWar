@@ -37,7 +37,8 @@ class DQNAgent<ND : DQNetwork.Data>(private val playerSide: Player.Side,
 		val pickedAction =
 				if(shouldPickRandomAction()) evaluatedActions.takeIf { it.isNotEmpty() }?.random()
 				else evaluatedActions.maxBy { it.second.finalOutput }?.takeIf { it.second.finalOutput > actionThreshold }
-		logger.debug("$playerSide picked ${pickedAction?.first?.javaClass?.simpleName}: ${pickedAction?.second?.finalOutput}")
+		if(pickedAction != null)
+			logger.debug("$playerSide picked ${pickedAction.first.javaClass.simpleName}: ${pickedAction.second.finalOutput}")
 		return pickedAction?.also { currentEvaluations.add(it.second) }?.first
 	}
 
