@@ -5,15 +5,19 @@ import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import kotlin.random.Random
 
-class RandomAgent(seed: Int) : Agent
+class RandomAgent(private val seed: Int) : Agent<RandomAgent.Data>
 {
+	data class Data(val seed: Int) : Agent.Data
+
 	private val random = Random(seed)
+
+	override val data get() = Data(seed)
+
+	constructor(data: Data) : this(data.seed)
 
 	override fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>) = actions.random(random)
 
 	override fun receiveReward(reward: Float) { }
 
 	override fun moveToNextTimestamp() { }
-
-	override fun teachAndReset() { }
 }

@@ -1,44 +1,34 @@
 package pl.karol202.bow.darvin.agent
 
-import com.google.gson.annotations.SerializedName
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import pl.karol202.bow.darvin.Action
-import pl.karol202.bow.darvin.neural.DarvinReinforcementNetwork
+import pl.karol202.bow.darvin.neural.DQNetwork
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player
 import kotlin.random.Random
 
 //Deep Q-network agent
-class DQNAgent(private val playerSide: Player.Side,
-               private val actionThreshold: Float,
-               private val learnRate: Float,
-               private val discountFactor: Float,
-               private val epsilon: Float,
-               private val learningSamplesPerEpoch: Int,
-               private val learningSamplesMemorySize: Int,
-               initialData: Data?) : Agent
+class DQNAgent<ND : DQNetwork.Data>(private val playerSide: Player.Side,
+                                    private val actionThreshold: Float,
+                                    private val epsilon: Float,
+                                    private val network: DQNetwork<ND>) : Agent<DQNAgent.Data<ND>>
 {
-	data class Data(val networkData: DarvinReinforcementNetwork.Data,
-	                val learningSamples: List<LearningSample>)
+	data class Data<ND : DQNetwork.Data>(val networkData: ND) : Agent.Data
 
-	data class LearningSample(val evaluation: Evaluation,
+	data class LearningSample(val evaluation: DQNetwork.Evaluation,
 	                          val allErrors: List<FloatArray>)
 
-	private data class Timestamp(val evaluations: List<Evaluation>,
+	private data class Timestamp(val evaluations: List<DQNetwork.Evaluation>,
 	                             val reward: Float)
 
-	class Evaluation(@SerializedName("i") val input: FloatArray,
-	                 @SerializedName("a") val allOutputs: List<FloatArray>, // Including final output
-	                 @SerializedName("f") val finalOutput: Float)
+	override val data get() = Data(network.data)
 
 	private val logger: Logger = LoggerFactory.getLogger(javaClass)
-	private val network = DarvinReinforcementNetwork(initialData?.networkData)
-	private val learningSamples = initialData?.learningSamples?.toMutableList() ?: mutableListOf()
 
 	private var timestamps = mutableListOf<Timestamp>()
-	private var currentEvaluations = mutableListOf<Evaluation>()
+	private var currentEvaluations = mutableListOf<DQNetwork.Evaluation>()
 	private var currentReward = 0f
 
 	override fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
@@ -71,17 +61,7 @@ class DQNAgent(private val playerSide: Player.Side,
 		currentReward = 0f
 	}
 
-	//Assumes that moveToNextTimestamp() has been called
-	override fun teachAndReset()
-	{
-		learningSamples += calculateLearningSamples()
-		checkLearningSamplesMemorySize()
-		teachNetwork()
-
-		timestamps = mutableListOf()
-	}
-
-	private fun calculateLearningSamples(): List<LearningSample>
+	fun calculateLearningSamples(discountFactor: Float): List<LearningSample>
 	{
 		var currentReward = 0f
 		return timestamps.reversed().flatMap { (evaluations, reward) ->
@@ -93,26 +73,4 @@ class DQNAgent(private val playerSide: Player.Side,
 			}
 		}.reversed()
 	}
-
-	private fun checkLearningSamplesMemorySize()
-	{
-		//If memory size is not exceeded, lambda won't be called
-		repeat(learningSamples.size - learningSamplesMemorySize) {
-			learningSamples.removeAt(0)
-		}
-	}
-
-	private fun teachNetwork()
-	{
-		learningSamples.shuffled().take(learningSamplesPerEpoch).forEach { sample ->
-			teachNetworkOneSample(sample)
-		}
-	}
-
-	private fun teachNetworkOneSample(learningSample: LearningSample)
-	{
-		network.learn(learningSample.evaluation, learningSample.allErrors, learnRate)
-	}
-
-	fun getData() = Data(network.getData(), learningSamples)
 }

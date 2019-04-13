@@ -6,9 +6,13 @@ import pl.karol202.bow.darvin.environment.Environment
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
 
-class DarvinBot<A : Agent>(val agent: A,
-                           private val environment: Environment) : Bot
+class DarvinBot<A : Agent<AD>, AD : Agent.Data>(val agent: A,
+                                                private val environment: Environment) : Bot<DarvinBot.Data<AD>>
 {
+	data class Data<AD : Agent.Data>(val agentData: AD) : Bot.Data
+
+	override val data = Data(agent.data)
+
 	private lateinit var game: Game
 	private lateinit var currentState: GameState
 	private lateinit var side: Player.Side
@@ -24,6 +28,11 @@ class DarvinBot<A : Agent>(val agent: A,
 		val actions = player.entities.flatMap { playWithEntity(it.id) } + recruit()
 		val actionModels = actions.filterNotNull().map { it.toModelAction() }
 		return Order(actionModels)
+	}
+
+	override fun endGame(game: Game, winner: Player.Side)
+	{
+		receiveRewards(game.state, winner)
 	}
 
 	private fun initState(game: Game, side: Player.Side)
@@ -127,10 +136,4 @@ class DarvinBot<A : Agent>(val agent: A,
 	private fun isBaseOccupied() = currentState.getEntitiesAt(player.base.position).isNotEmpty()
 
 	private fun <A : Action> List<A>.pickAction() = agent.pickAction(game, currentState, this)
-
-	override fun endGame(game: Game, winner: Player.Side)
-	{
-		receiveRewards(game.state, winner)
-		agent.teachAndReset()
-	}
 }

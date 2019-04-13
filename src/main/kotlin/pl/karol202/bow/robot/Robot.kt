@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import pl.karol202.bow.service.GameService
+import javax.annotation.PostConstruct
 
 @Component
 class Robot
@@ -14,8 +15,9 @@ class Robot
 	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
 	//Main entry point for robot
-	fun start()
+	@PostConstruct
+	fun onStart()
 	{
-
+		logger.debug("Robot created")
 	}
 }

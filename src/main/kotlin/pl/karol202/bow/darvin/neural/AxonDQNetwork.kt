@@ -1,34 +1,23 @@
 package pl.karol202.bow.darvin.neural
 
 import pl.karol202.axon.layer.LayerData
-import pl.karol202.axon.layer.ReinforcementLayer
 import pl.karol202.axon.layer.reinforcementNeuron
 import pl.karol202.axon.network.NetworkData
 import pl.karol202.axon.network.ReinforcementNetwork
 import pl.karol202.axon.network.reinforcementLayer
 import pl.karol202.axon.network.reinforcementNetwork
 import pl.karol202.axon.neuron.NeuronData
-import pl.karol202.axon.neuron.ReinforcementNeuron
 import pl.karol202.axon.neuron.TangensoidalActivation
-import pl.karol202.axon.specification.NetworkSpecification
 import pl.karol202.axon.specification.createNetworkRandomly
 import pl.karol202.bow.darvin.*
-import pl.karol202.bow.darvin.agent.DQNAgent
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.*
 import pl.karol202.bow.util.FloatRange
 import pl.karol202.bow.util.size
 
-private typealias ReinforcementNetworkSpecification = NetworkSpecification<ReinforcementNetwork, ReinforcementLayer, ReinforcementNeuron>
-
-class DarvinReinforcementNetwork(initialData: Data?)
+class AxonDQNetwork private constructor(private val network: ReinforcementNetwork) : DQNetwork<AxonDQNetwork.Data>
 {
-	companion object
-	{
-		private val RANDOM_RANGE = -0.1f..0.1f
-	}
-
-	data class Data(val layers: List<List<FloatArray>>)
+	data class Data(val layers: List<List<FloatArray>>) : DQNetwork.Data
 
 	private object Inputs
 	{
@@ -170,48 +159,57 @@ class DarvinReinforcementNetwork(initialData: Data?)
 		}
 	}
 
-	private val network = reinforcementNetwork(Inputs.size) {
-		reinforcementLayer {
-			repeat(500) { reinforcementNeuron(TangensoidalActivation(1f), 0.1f) }
-		}
-		reinforcementLayer {
-			repeat(50) { reinforcementNeuron(TangensoidalActivation(1f), 0.1f) }
-		}
-		reinforcementLayer {
-			reinforcementNeuron(TangensoidalActivation(1f), 0.1f)
-		}
-	}.createNetworkWithData(initialData)
+	companion object
+	{
+		private fun createNetworkFromData(data: Data) =
+				createNetworkSpecification().createNetwork(data.convertToNetworkData())
 
-	private fun ReinforcementNetworkSpecification.createNetworkWithData(data: Data?) =
-			if(data == null) createNetworkRandomly(RANDOM_RANGE)
-			else createNetwork(createNetworkData(data))
+		private fun createNetworkRandomly(randomRange: FloatRange) =
+				createNetworkSpecification().createNetworkRandomly(randomRange)
 
-	private fun createNetworkData(data: Data) =
-			NetworkData.fromList(data.layers.map { layer ->
-				LayerData.fromList(layer.map { neuron ->
-					NeuronData.fromArray(neuron)
+		private fun createNetworkSpecification() = reinforcementNetwork(Inputs.size) {
+			reinforcementLayer {
+				repeat(500) { reinforcementNeuron(TangensoidalActivation(1f), 0.1f) }
+			}
+			reinforcementLayer {
+				repeat(50) { reinforcementNeuron(TangensoidalActivation(1f), 0.1f) }
+			}
+			reinforcementLayer {
+				reinforcementNeuron(TangensoidalActivation(1f), 0.1f)
+			}
+		}
+
+		private fun Data.convertToNetworkData() =
+				NetworkData.fromList(layers.map { layer ->
+					LayerData.fromList(layer.map { neuron ->
+						NeuronData.fromArray(neuron)
+					})
 				})
-			})
-
-	fun evaluateAndGetAllData(game: Game, state: GameState, action: Action, side: Player.Side): DQNAgent.Evaluation
-	{
-		val input = Inputs.transformToInputArray(game, state, action, side)
-		val outputs = network.calculateAndGetIntermediateOutputs(input)
-		val finalOutput = outputs.last().single() // Network has 1 output
-		return DQNAgent.Evaluation(input, outputs, finalOutput)
 	}
 
-	fun calculateErrors(reward: Float, output: Float) =
-			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward - output)) // Network has 1 output
-
-	fun learn(evaluation: DQNAgent.Evaluation, allErrors: List<FloatArray>, learnRate: Float)
-	{
-		network.learn(evaluation.input, evaluation.allOutputs, allErrors, learnRate)
-	}
-
-	fun getData() = Data(network.networkData.getLayersData().map { layer ->
+	override val data get() = Data(network.networkData.getLayersData().map { layer ->
 		layer.getNeuronsData().map { neuron ->
 			neuron.getWeights().toFloatArray()
 		}
 	})
+
+	constructor(initialData: Data) : this(createNetworkFromData(initialData))
+
+	constructor(randomRange: FloatRange) : this(createNetworkRandomly(randomRange))
+
+	override fun evaluateAndGetAllData(game: Game, state: GameState, action: Action, side: Player.Side): DQNetwork.Evaluation
+	{
+		val input = Inputs.transformToInputArray(game, state, action, side)
+		val outputs = network.calculateAndGetIntermediateOutputs(input)
+		val finalOutput = outputs.last().single() // Network has 1 output
+		return DQNetwork.Evaluation(input, outputs, finalOutput)
+	}
+
+	override fun calculateErrors(reward: Float, output: Float) =
+			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward - output)) // Network has 1 output
+
+	override fun learn(evaluation: DQNetwork.Evaluation, allErrors: List<FloatArray>, learnRate: Float)
+	{
+		network.learn(evaluation.input, evaluation.allOutputs, allErrors, learnRate)
+	}
 }
