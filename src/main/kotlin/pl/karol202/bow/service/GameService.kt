@@ -16,8 +16,6 @@ import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player
 import pl.karol202.bow.util.DataSerializer
 import pl.karol202.bow.util.randomOrNull
-import java.text.SimpleDateFormat
-import java.util.*
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
@@ -40,7 +38,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	data class Params(val actionThreshold: Float = 0f,
 	                  val discountFactor: Float = 0.98f,
 	                  val epsilon: Float = 0.1f,
-	                  val learningSamplesLimit: Int = 50000,
+	                  val learningSamplesLimit: Int = 5000,
 	                  val botsDirectory: String = "default",
 	                  val samplesDirectory: String = "default",
 	                  val allowBotDuplication: Boolean = false,
@@ -85,7 +83,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	private val botBindings get() = params.botBindings
 
 	val botsNames get() = botsData.map { it.key }
-	val samplesAmount get() = learningSamples.size
+	val samplesAmount get() = learningSamples.mapValues { (_, list) -> list.size }
 
 	@PostConstruct
 	fun onStart()
@@ -144,24 +142,28 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 
 	private fun DarvinBotWithDQNAgent.calculateAndSaveSamples()
 	{
+		val name = busyBots.entries.singleOrNull { it.value === this }?.key ?: throw IllegalStateException("Unknown bot")
 		val samples = agent.calculateLearningSamples(discountFactor)
-		val name = busyBots.entries.singleOrNull { it.value === this }?.key
+		logger.debug("Calculated samples for $name")
 		saveSamples(samples, name)
 
-		learningSamples = learningSamples + samples
+		val oldSamples = learningSamples[name] ?: emptyList()
+		val mixedSamples = oldSamples + samples
+		learningSamples = learningSamples + (name to mixedSamples)
 		ensureLearningSamplesAmount()
 	}
 
 	private fun ensureLearningSamplesAmount()
 	{
-		val exceedingSamples = learningSamples.size - learningSamplesLimit
-		if(exceedingSamples > 0) learningSamples = learningSamples.drop(exceedingSamples)
+		learningSamples = learningSamples.mapValues { (_, samples) ->
+			val exceedingSamples = learningSamples.size - learningSamplesLimit
+			if(exceedingSamples > 0) samples.drop(exceedingSamples) else samples
+		}
 	}
 
-	private fun saveSamples(samples: List<DQNAgent.LearningSample>, botName: String?) =
+	private fun saveSamples(samples: List<DQNAgent.LearningSample>, botName: String) =
 			measureTimeAndLog("Saved samples") {
-				fun createSamplesFilename() = "${SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(Date())} $botName"
-				dataSerializer.saveSamples(samples, samplesDirectory, createSamplesFilename())
+				dataSerializer.saveSamples(samples, samplesDirectory, botName)
 			}
 
 	private fun saveBotData(botData: DarvinBotData, name: String) = measureTimeAndLog("Saved bot data") {
@@ -198,8 +200,9 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 
 	fun teach(learnRate: Float, samplesAmount: Int, botsNames: List<String>?)
 	{
-		fun DQNetwork<*>.teach(samplesAmount: Int) = measureTimeAndLog("Taught network") {
-			learningSamples.shuffled().take(samplesAmount).forEach { sample ->
+		fun DQNetwork<*>.teach(botName: String, samplesAmount: Int) = measureTimeAndLog("Taught network") {
+			val samples = learningSamples[botName] ?: emptyList()
+			samples.shuffled().take(samplesAmount).forEach { sample ->
 				learn(sample.evaluation, sample.allErrors, learnRate)
 			}
 		}
@@ -209,7 +212,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 			val agentData = botData.agentData
 			val networkData = agentData.networkData
 			val network = AxonDQNetwork(networkData)
-			network.teach(samplesAmount)
+			network.teach(name, samplesAmount)
 			botData.copy(agentData = agentData.copy(networkData = network.data)).also { saveBotData(it, name) }
 		}
 	}

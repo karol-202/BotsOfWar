@@ -68,6 +68,7 @@ class DQNAgent<ND : DQNetwork.Data>(private val playerSide: Player.Side,
 		return timestamps.reversed().flatMap { (evaluations, reward) ->
 			currentReward *= discountFactor
 			currentReward += reward
+			logger.debug("Reward: $currentReward")
 			evaluations.map { evaluation ->
 				val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
 				LearningSample(evaluation, errors)

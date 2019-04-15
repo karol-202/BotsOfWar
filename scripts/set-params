@@ -1,18 +1,18 @@
 #!/bin/bash
-source params.conf
+source "$(dirname $0)/params.conf"
 while [ $# -gt 0 ]
 do
     case "$1" in
-        --threshold*)
+        --threshold)
             shift
             if [ $# -gt 0 ]; then
-            threshold=$1
+                threshold=$1
             else
-            echo "No threshold specified"
+                echo "No threshold specified"
             fi
             shift
             ;;
-        --discount*)
+        --discount)
             shift
             if [ $# -gt 0 ]; then
                 discount=$1
@@ -21,7 +21,7 @@ do
             fi
             shift
             ;;
-        --epsilon*)
+        --epsilon)
             shift
             if [ $# -gt 0 ]; then
                 epsilon=$1
@@ -30,7 +30,7 @@ do
             fi
             shift
             ;;
-        --samples*)
+        --samples)
             shift
             if [ $# -gt 0 ]; then
                 samples=$1
@@ -39,7 +39,7 @@ do
             fi
             shift
             ;;
-        --bots-dir*)
+        --bots-dir)
             shift
             if [ $# -gt 0 ]; then
                 bots_dir=$1
@@ -48,7 +48,7 @@ do
             fi
             shift
             ;;
-        --samples-dir*)
+        --samples-dir)
             shift
             if [ $# -gt 0 ]; then
                 samples_dir=$1
@@ -57,7 +57,7 @@ do
             fi
             shift
             ;;
-        --duplication*)
+        --duplication)
             shift
             if [ $# -gt 0 ]; then
                 duplication=$1
@@ -66,7 +66,7 @@ do
             fi
             shift
             ;;
-        --bind1*)
+        --bind1)
             shift
             if [ $# -gt 0 ]; then
                 bind1=$1
@@ -76,13 +76,13 @@ do
             fi
             shift
             ;;
-        --bind2*)
+        --bind2)
             shift
             if [ $# -gt 0 ]; then
-            bind2=$1
-            no_bind2=false
+                bind2=$1
+                no_bind2=false
             else
-            echo "No bind2 specified"
+                echo "No bind2 specified"
             fi
             shift
             ;;

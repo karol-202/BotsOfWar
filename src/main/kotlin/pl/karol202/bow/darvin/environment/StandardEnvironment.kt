@@ -9,6 +9,9 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 {
 	companion object
 	{
+		//Received every turn
+		private const val BASE_REWARD = -0.1f
+
 		private const val WIN_REWARD = 0f
 		private const val LOSS_REWARD = 0f
 
@@ -18,9 +21,9 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 		private const val MY_ENTITY_KILL_REWARD = -2f
 		private const val ENEMY_ENTITY_KILL_REWARD = 2f
 
-		private const val ENTITY_RECRUIT_REWARD = 0.5f
+		private const val ENTITY_RECRUIT_REWARD = 0.3f
 
-		private const val GOLD_FIND_REWARD = 0.3f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
+		private const val GOLD_FIND_REWARD = 0.2f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
 	}
 
 	private lateinit var lastState: GameState
@@ -44,7 +47,8 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 	{
 		checkForWin(winner)?.let { return it }
 
-		return newState.getRewardForBaseAttacks() +
+		return BASE_REWARD +
+			   newState.getRewardForBaseAttacks() +
 			   newState.getRewardForEntityKills() +
 			   newState.getRewardForEntityRecruitment() +
 			   newState.getRewardForGoldMining()

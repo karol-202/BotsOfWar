@@ -5,6 +5,8 @@ import pl.karol202.bow.darvin.agent.DQNAgent
 import pl.karol202.bow.service.DarvinBotData
 import pl.karol202.bow.service.GameService
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 class DataSerializer
 {
@@ -17,7 +19,8 @@ class DataSerializer
 
 	private data class BotDataWrapper(val botData: DarvinBotData)
 
-	private data class SamplesList(val samples: List<DQNAgent.LearningSample>)
+	private data class NamedSamples(val name: String,
+	                                val samples: List<DQNAgent.LearningSample>)
 
 	private val paramsFile = File(PARAMS_FILE_PATH)
 	private val botsDir = File(BOTS_DIR_PATH)
@@ -50,34 +53,39 @@ class DataSerializer
 
 	private fun getBotsDirectory(directoryName: String) = File(botsDir, directoryName)
 
-	//Load 'limit' newest samples and return them in list where the newest samples are on the end
-	fun loadSamples(directoryName: String, limit: Int?): List<DQNAgent.LearningSample>
+	//Load 'limit' newest samples for each bot and return them in the map of lists where the newest samples are on the end
+	fun loadSamples(directoryName: String, limit: Int?): Map<String, List<DQNAgent.LearningSample>>
 	{
-		fun loadSamplesFromFile(file: File) =
-				file.reader().use { reader -> gson.fromJson(reader, SamplesList::class.java)?.samples }
+		fun loadSamplesFromFile(file: File): NamedSamples =
+				file.reader().use { reader -> gson.fromJson(reader, NamedSamples::class.java) }
 
-		// Returns false if list is full, true otherwise
-		fun MutableList<DQNAgent.LearningSample>.addFromFile(file: File): Boolean
+		val samplesListsMap = mutableMapOf<String, MutableList<DQNAgent.LearningSample>>()
+
+		fun addFromFile(file: File)
 		{
-			loadSamplesFromFile(file)?.forEach { sample ->
-				add(sample)
-				if(limit != null && size >= limit) return false
+			val namedSamples = loadSamplesFromFile(file)
+			val samplesList = samplesListsMap.getOrPut(namedSamples.name) { mutableListOf() }
+			namedSamples.samples.forEach { sample ->
+				if(limit != null && samplesList.size >= limit) return@forEach
+				samplesList.add(sample)
 			}
-			return true
 		}
 
-		val samples = mutableListOf<DQNAgent.LearningSample>()
 		val directory = getSamplesDirectory(directoryName).apply { if(!exists()) mkdirs() }
 		directory.listFiles { _, name -> !name.startsWith("_") }
-				.sortedByDescending { it.name }
-				.forEach { file -> if(!samples.addFromFile(file)) return@forEach }
-		return samples.reversed()
+				.sortedByDescending { it.name } // Newest samples first
+				.forEach { file -> addFromFile(file) }
+
+		return samplesListsMap.mapValues { it.value.reversed() } // For newest samples to be on the end
 	}
 
-	fun saveSamples(samples: List<DQNAgent.LearningSample>, directoryName: String, filename: String) =
-			File(getSamplesDirectory(directoryName), filename).writer().use { writer ->
-				gson.toJson(SamplesList(samples), writer)
+	fun saveSamples(samples: List<DQNAgent.LearningSample>, directoryName: String, botName: String) =
+			File(getSamplesDirectory(directoryName), createSamplesFilename(botName)).writer().use { writer ->
+				gson.toJson(NamedSamples(botName, samples), writer)
 			}
+
+	private fun createSamplesFilename(botName: String) =
+			"${SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(Date())} $botName"
 
 	private fun getSamplesDirectory(directoryName: String) = File(samplesDir, directoryName)
 }
