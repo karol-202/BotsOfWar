@@ -5,26 +5,28 @@ import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Mine
 import pl.karol202.bow.model.Player
 
-class StandardEnvironment(private val mySide: Player.Side) : Environment
+class StandardEnvironment(private val mySide: Player.Side,
+                          private val params: Params) : Environment
 {
-	companion object
-	{
-		//Received every turn
-		private const val BASE_REWARD = -0.1f
+	data class Params(val baseReward: Float = 0f,
+	                  val winReward: Float = 0f,
+	                  val lossReward: Float = 0f,
+	                  val myBaseAttackReward: Float = -10f,
+	                  val enemyBaseAttackReward: Float = 10f,
+	                  val myEntityKillReward: Float = -2f,
+	                  val enemyEntityKillReward: Float = 2f,
+	                  val entityRecruitReward: Float = 0.3f,
+	                  val goldFindReward: Float = 0.2f) // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
 
-		private const val WIN_REWARD = 0f
-		private const val LOSS_REWARD = 0f
-
-		private const val MY_BASE_ATTACK_REWARD = -10f
-		private const val ENEMY_BASE_ATTACK_REWARD = 10f
-
-		private const val MY_ENTITY_KILL_REWARD = -2f
-		private const val ENEMY_ENTITY_KILL_REWARD = 2f
-
-		private const val ENTITY_RECRUIT_REWARD = 0.3f
-
-		private const val GOLD_FIND_REWARD = 0.2f // For mining amount of gold specified in Mine.miningPerWorker (hardcoded 50)
-	}
+	private val baseReward get() = params.baseReward
+	private val winReward get() = params.winReward
+	private val lossReward get() = params.lossReward
+	private val myBaseAttackReward get() = params.myBaseAttackReward
+	private val enemyBaseAttackReward get() = params.enemyBaseAttackReward
+	private val myEntityKillReward get() = params.myEntityKillReward
+	private val enemyEntityKillReward get() = params.enemyEntityKillReward
+	private val entityRecruitReward get() = params.entityRecruitReward
+	private val goldFindReward get() = params.goldFindReward
 
 	private lateinit var lastState: GameState
 	private lateinit var initialBases: Map<Player.Side, Base>
@@ -47,14 +49,14 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 	{
 		checkForWin(winner)?.let { return it }
 
-		return BASE_REWARD +
+		return baseReward +
 			   newState.getRewardForBaseAttacks() +
 			   newState.getRewardForEntityKills() +
 			   newState.getRewardForEntityRecruitment() +
 			   newState.getRewardForGoldMining()
 	}
 
-	private fun checkForWin(winner: Player.Side?) = winner?.let { if(it == mySide) WIN_REWARD else LOSS_REWARD }
+	private fun checkForWin(winner: Player.Side?) = winner?.let { if(it == mySide) winReward else lossReward }
 
 	private fun GameState.getRewardForBaseAttacks(): Float
 	{
@@ -63,7 +65,7 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 		fun getBaseHPLoss(side: Player.Side) = lastState.getBaseHP(side) - this.getBaseHP(side)
 
 		fun getRewardForFullBaseAttack(side: Player.Side) =
-				if(side == mySide) MY_BASE_ATTACK_REWARD else ENEMY_BASE_ATTACK_REWARD
+				if(side == mySide) myBaseAttackReward else enemyBaseAttackReward
 
 		fun getRewardForBaseAttack(side: Player.Side) =
 				(getBaseHPLoss(side) / initialBases.getValue(side).hp) * getRewardForFullBaseAttack(side)
@@ -74,10 +76,10 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 	private fun GameState.getRewardForEntityKills(): Float
 	{
 		fun getRewardForEntityKill(side: Player.Side) =
-				if(side == mySide) MY_ENTITY_KILL_REWARD else ENEMY_ENTITY_KILL_REWARD
+				if(side == mySide) myEntityKillReward else enemyEntityKillReward
 
 		val currentIds = allEntities.map { it.id }
-		val difference = lastState.allEntities.filterNot { it.id in currentIds }
+		val difference = lastState.allEntities.filter { it.id !in currentIds }
 		return difference.map { getRewardForEntityKill(it.owner!!) }.sum()
 	}
 
@@ -85,7 +87,7 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 	{
 		val previousIds = lastState.getPlayer(mySide).entities.map { it.id }
 		val difference = getPlayer(mySide).entities.filterNot { it.id in previousIds }
-		return difference.size * ENTITY_RECRUIT_REWARD
+		return difference.size * entityRecruitReward
 	}
 
 	private fun GameState.getRewardForGoldMining(): Float
@@ -94,7 +96,7 @@ class StandardEnvironment(private val mySide: Player.Side) : Environment
 
 		fun getGoldLoss(mine: Mine) = lastState.getMineById(mine.id).goldLeft - getMineById(mine.id).goldLeft
 
-		fun getRewardForMiningIn(mine: Mine) = (getGoldLoss(mine).toFloat() / mine.miningPerWorker) * GOLD_FIND_REWARD
+		fun getRewardForMiningIn(mine: Mine) = (getGoldLoss(mine).toFloat() / mine.miningPerWorker) * goldFindReward
 
 		return mines.filter { isMineMine(it) }.map { getRewardForMiningIn(it) }.sum()
 	}

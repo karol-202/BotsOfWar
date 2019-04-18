@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ $# -ge 3 ]
+if [ $# -ge 2 ]
 then
     data="learnRate=$1"; shift
     data="$data&samplesAmount=$1"; shift

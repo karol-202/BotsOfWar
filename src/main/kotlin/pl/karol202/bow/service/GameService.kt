@@ -36,8 +36,9 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	}
 
 	data class Params(val actionThreshold: Float = 0f,
-	                  val discountFactor: Float = 0.98f,
+	                  val discountFactor: Float = 0.9f,
 	                  val epsilon: Float = 0.1f,
+	                  val environmentParams: StandardEnvironment.Params = StandardEnvironment.Params(),
 	                  val learningSamplesLimit: Int = 5000,
 	                  val botsDirectory: String = "default",
 	                  val samplesDirectory: String = "default",
@@ -76,6 +77,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	private val actionThreshold get() = params.actionThreshold
 	private val discountFactor get() = params.discountFactor
 	private val epsilon get() = params.epsilon
+	private val environmentParams get() = params.environmentParams
 	private val learningSamplesLimit get() = params.learningSamplesLimit
 	private val botsDirectory get() = params.botsDirectory
 	private val samplesDirectory get() = params.samplesDirectory
@@ -107,7 +109,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	}
 
 	private fun createBot(side: Player.Side, data: DarvinBotData) =
-			DarvinBot(createAgent(side, data.agentData), StandardEnvironment(side))
+			DarvinBot(createAgent(side, data.agentData), StandardEnvironment(side, environmentParams))
 
 	private fun createAgent(side: Player.Side, data: DQNAgentData) =
 			DQNAgent(side, actionThreshold, epsilon, createNetwork(data.networkData))
@@ -190,7 +192,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	//Creates bot with network with weights randomly distributed between -randomRange to randomRange
 	fun addNewBot(name: String, randomRange: Float): Boolean
 	{
-		if(botsData.containsKey(name)) return false
+		if(botsData.containsKey(name) || name.isBlank()) return false
 		val network = AxonDQNetwork(-randomRange..randomRange)
 		val botData = DarvinBotData(DQNAgentData(network.data))
 		botsData = botsData + (name to botData)
