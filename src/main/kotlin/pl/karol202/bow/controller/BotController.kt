@@ -10,10 +10,15 @@ import pl.karol202.bow.service.GameService
 @RestController
 class BotController
 {
+	companion object
+	{
+		const val ENDPOINT = "bot"
+	}
+
 	@Autowired
 	private lateinit var gameService: GameService
 
-	@RequestMapping("/bot")
+	@RequestMapping("/$ENDPOINT")
 	fun updateGameState(@RequestBody gameState: GameState.GameStateData) =
 			gameService.updateStateAndGetOrder(gameState).toOrderData()
 }
