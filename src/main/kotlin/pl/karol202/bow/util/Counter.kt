@@ -1,9 +1,10 @@
 package pl.karol202.bow.util
 
-class Counter(initialValue: Int = 0,
+class Counter(val value: Int = 0,
               private val maxValue: Int)
 {
-	var value = initialValue
-		get() = field++.also { if(field > maxValue) field = 0 }
-		private set
+	val next get() = Counter(getNextValue(), maxValue)
+	val zero get() = Counter(0, maxValue)
+
+	private fun getNextValue() = (value + 1).takeIf { it <= maxValue } ?: 0
 }

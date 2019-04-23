@@ -12,8 +12,9 @@ class DataService
 {
 	companion object
 	{
-		private const val ROBOT_PARAMS_FILE_PATH = "data/params_robot"
-		private const val GAME_SERVICE_DATA_FILE_PATH = "data/params_game_service"
+		private const val ROBOT_PARAMS_FILE_PATH = "data/robot_params"
+		private const val ROBOT_DATA_FILE_PATH = "data/robot_data"
+		private const val GAME_SERVICE_DATA_FILE_PATH = "data/game_service_params"
 		private const val BOTS_DIR_PATH = "data/bots/"
 		private const val SAMPLES_DIR_PATH = "data/samples/"
 	}
@@ -24,35 +25,24 @@ class DataService
 	                                val samples: List<DQNAgent.LearningSample>)
 
 	private val robotParamsFile = File(ROBOT_PARAMS_FILE_PATH)
+	private val robotDataFile = File(ROBOT_DATA_FILE_PATH)
 	private val gameServiceDataFile = File(GAME_SERVICE_DATA_FILE_PATH)
 	private val botsDir = File(BOTS_DIR_PATH)
 	private val samplesDir = File(SAMPLES_DIR_PATH)
 
 	private val gson = Gson()
 
-	fun loadRobotData() = synchronized(robotParamsFile) {
-		robotParamsFile.takeIf { it.exists() }?.reader()?.use { reader ->
-			gson.fromJson(reader, RobotService.Data::class.java)
-		}
-	}
+	fun loadRobotParams() = loadFromFile<RobotService.Params>(robotParamsFile)
 
-	fun saveRobotData(data: RobotService.Data) = synchronized(robotParamsFile) {
-		robotParamsFile.writer().use { writer ->
-			gson.toJson(data, writer)
-		}
-	}
+	fun saveRobotParams(params: RobotService.Params) = saveToFile(robotParamsFile, params)
 
-	fun loadGameServiceParams() = synchronized(gameServiceDataFile) {
-		gameServiceDataFile.takeIf { it.exists() }?.reader()?.use { reader ->
-			gson.fromJson(reader, GameService.Params::class.java)
-		}
-	}
+	fun loadRobotData() = loadFromFile<RobotService.Data>(robotDataFile)
 
-	fun saveGameServiceParams(params: GameService.Params) = synchronized(gameServiceDataFile) {
-		gameServiceDataFile.writer().use { writer ->
-			gson.toJson(params, writer)
-		}
-	}
+	fun saveRobotData(data: RobotService.Data) = saveToFile(robotDataFile, data)
+
+	fun loadGameServiceParams() = loadFromFile<GameService.Params>(gameServiceDataFile)
+
+	fun saveGameServiceParams(params: GameService.Params) = saveToFile(gameServiceDataFile, params)
 
 	fun loadBots(directoryName: String): Map<String, DarvinBotData> = synchronized(botsDir) {
 		fun loadBotFromFile(file: File) =
@@ -64,11 +54,8 @@ class DataService
 						.associate { file -> file.name to loadBotFromFile(file) }
 	}
 
-	fun saveBot(botData: DarvinBotData, directoryName: String, filename: String) = synchronized(botsDir) {
-		File(getBotsDirectory(directoryName), filename).writer().use { writer ->
-			gson.toJson(BotDataWrapper(botData), writer)
-		}
-	}
+	fun saveBot(botData: DarvinBotData, directoryName: String, filename: String) =
+			saveToFile(File(getBotsDirectory(directoryName), filename), BotDataWrapper(botData))
 
 	private fun getBotsDirectory(directoryName: String) = File(botsDir, directoryName)
 
@@ -97,14 +84,23 @@ class DataService
 		samplesListsMap.mapValues { it.value.reversed() } // For newest samples to be on the end
 	}
 
-	fun saveSamples(samples: List<DQNAgent.LearningSample>, directoryName: String, botName: String) = synchronized(samplesDir) {
-		File(getSamplesDirectory(directoryName), createSamplesFilename(botName)).writer().use { writer ->
-			gson.toJson(NamedSamples(botName, samples), writer)
-		}
-	}
+	fun saveSamples(samples: List<DQNAgent.LearningSample>, directoryName: String, botName: String) =
+			saveToFile(File(getSamplesDirectory(directoryName), createSamplesFilename(botName)), NamedSamples(botName, samples))
 
 	private fun createSamplesFilename(botName: String) =
 			"${SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(Date())} $botName"
 
 	private fun getSamplesDirectory(directoryName: String) = File(samplesDir, directoryName)
+
+	private inline fun <reified T> loadFromFile(file: File) = synchronized(file) {
+		file.takeIf { it.exists() }?.reader()?.use { reader ->
+			gson.fromJson(reader, T::class.java)
+		}
+	}
+
+	private fun saveToFile(file: File, data: Any) = synchronized(file) {
+		file.writer().use { writer ->
+			gson.toJson(data, writer)
+		}
+	}
 }

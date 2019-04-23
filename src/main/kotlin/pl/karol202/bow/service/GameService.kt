@@ -28,7 +28,7 @@ typealias DQNAgentData = DQNAgent.Data<AxonDQNetworkData>
 typealias AxonDQNetworkData = AxonDQNetwork.Data
 
 @Service
-class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
+class GameService @Autowired constructor(private val dataService: DataService) : DarvinGameListener<DarvinBotWithDQNAgent>
 {
 	companion object
 	{
@@ -56,28 +56,24 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	private val coroutineJob = Job()
 	private val coroutineScope = CoroutineScope(coroutineJob)
 
-	@Autowired
-	private lateinit var dataService: DataService
 	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 	private val gameManager = StandardGameManager(coroutineScope) { side -> createBotFromRandomData(side) }.apply {
 		setGameListener(this@GameService)
 	}
+	var onGameEndListener: (() -> Unit)? = null
 
-	private var _params: Params? = null
-	var params: Params
-		get() = _params!!
+	var params = dataService.loadGameServiceParams() ?: Params()
 		@Synchronized set(value)
 		{
-			val oldParams = _params
-			_params = value
+			val oldParams = field
+			field = value
 			saveParams()
-			if(oldParams == null) return
 			if(learningSamplesLimit != oldParams.learningSamplesLimit) ensureLearningSamplesAmount()
 			if(botsDirectory != oldParams.botsDirectory) reloadBotsData()
 			if(samplesDirectory != oldParams.samplesDirectory) reloadSamples()
 		}
-	private lateinit var botsData: Map<String, DarvinBotData>
-	private lateinit var learningSamples: Map<String, List<DQNAgent.LearningSample>> // Newest samples in the end
+	private var botsData = dataService.loadBots(botsDirectory)
+	private var learningSamples = dataService.loadSamples(samplesDirectory, learningSamplesLimit) // Newest samples in the end
 	private var busyBots = emptyMap<String, DarvinBotWithDQNAgent>()
 
 	private val actionThreshold get() = params.actionThreshold
@@ -96,10 +92,6 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	@PostConstruct
 	fun onStart()
 	{
-		params = dataService.loadGameServiceParams() ?: Params()
-		botsData = dataService.loadBots(botsDirectory)
-		learningSamples = dataService.loadSamples(samplesDirectory, learningSamplesLimit)
-
 		logger.debug("GameService created")
 	}
 
@@ -154,6 +146,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 		logger.info("Game ended")
 		bots.forEach { bot -> bot.calculateAndSaveSamples() }
 		busyBots = emptyMap()
+		onGameEndListener?.invoke()
 	}
 
 	private fun DarvinBotWithDQNAgent.calculateAndSaveSamples()
@@ -200,7 +193,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 
 	// API FUNCTIONS
 
-	//Creates bot with network with weights randomly distributed between -randomRange to randomRange
+	// Creates bot with network with weights randomly distributed between -randomRange to randomRange
 	@Synchronized
 	fun addNewBot(name: String, randomRange: Float): Boolean
 	{
@@ -233,10 +226,7 @@ class GameService : DarvinGameListener<DarvinBotWithDQNAgent>
 	}
 
 	@PreDestroy
-	fun onDestroy()
-	{
-		coroutineJob.cancel()
-	}
+	fun onDestroy() = coroutineJob.cancel()
 
 	private fun <T> measureTimeAndLog(message: String, block: () -> T): T
 	{

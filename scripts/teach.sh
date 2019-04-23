@@ -5,7 +5,7 @@ then
     data="$data&samplesAmount=$1"; shift
     while [ $# -gt 0 ]
     do
-	data="$data&bots=$1"; shift
+        data="$data&bots=$1"; shift
     done
     curl -s -X POST -d "$data" http://localhost:4321/admin/teach
 else
