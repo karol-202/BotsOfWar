@@ -10,7 +10,7 @@ interface Bot<D : Bot.Data>
 
 	val data: D
 
-	fun play(game: Game, side: Player.Side): Order
+	suspend fun play(game: Game, side: Player.Side): Order
 
 	fun endGame(game: Game, winner: Player.Side)
 }

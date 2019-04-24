@@ -10,7 +10,7 @@ class EmptyBot : Bot<EmptyBot.Data>
 
 	override val data = Data
 
-	override fun play(game: Game, side: Player.Side) = Order.emptyOrder
+	override suspend fun play(game: Game, side: Player.Side) = Order.emptyOrder
 
 	override fun endGame(game: Game, winner: Player.Side) { }
 }

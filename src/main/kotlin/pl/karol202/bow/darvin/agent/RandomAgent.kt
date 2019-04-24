@@ -15,7 +15,7 @@ class RandomAgent(private val seed: Int) : Agent<RandomAgent.Data>
 
 	constructor(data: Data) : this(data.seed)
 
-	override fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>) = actions.random(random)
+	override suspend fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>) = actions.random(random)
 
 	override fun receiveReward(reward: Float) { }
 

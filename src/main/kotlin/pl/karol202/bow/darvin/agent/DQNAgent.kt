@@ -1,5 +1,7 @@
 package pl.karol202.bow.darvin.agent
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import pl.karol202.bow.darvin.Action
@@ -7,6 +9,7 @@ import pl.karol202.bow.darvin.neural.DQNetwork
 import pl.karol202.bow.game.Game
 import pl.karol202.bow.model.GameState
 import pl.karol202.bow.model.Player
+import pl.karol202.bow.util.randomOrNull
 import kotlin.random.Random
 
 //Deep Q-network agent
@@ -31,12 +34,14 @@ class DQNAgent<ND : DQNetwork.Data>(private val playerSide: Player.Side,
 	private var currentEvaluations = mutableListOf<DQNetwork.Evaluation>()
 	private var currentReward = 0f
 
-	override fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
+	override suspend fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
 	{
-		val evaluatedActions = evaluateActions(game, state, actions)
 		val pickedAction =
-				if(shouldPickRandomAction()) evaluatedActions.takeIf { it.isNotEmpty() }?.random()
-				else evaluatedActions.maxBy { it.second.finalOutput }?.takeIf { it.second.finalOutput > actionThreshold }
+				if(shouldPickRandomAction()) actions.randomOrNull()?.let { it to evaluateAction(game, state, it) }
+				else evaluateActions(game, state, actions)
+						.maxBy { it.second.finalOutput }
+						?.takeIf { it.second.finalOutput > actionThreshold }
+
 		if(pickedAction != null)
 			logger.debug("$playerSide picked ${pickedAction.first.javaClass.simpleName}: ${pickedAction.second.finalOutput}")
 		return pickedAction?.also { currentEvaluations.add(it.second) }?.first
@@ -44,10 +49,13 @@ class DQNAgent<ND : DQNetwork.Data>(private val playerSide: Player.Side,
 
 	private fun shouldPickRandomAction() = Random.nextFloat() < epsilon
 
-	private fun <A : Action> evaluateActions(game: Game, state: GameState, actions: List<A>) =
-			actions.map { action -> action to evaluateAction(game, state, action) }
+	private suspend fun <A : Action> evaluateActions(game: Game, state: GameState, actions: List<A>) = coroutineScope {
+		actions.map { action ->
+			async { action to evaluateAction(game, state, action) }
+		}.map { it.await() }
+	}
 
-	private fun evaluateAction(game: Game, state: GameState, action: Action) =
+	private suspend fun evaluateAction(game: Game, state: GameState, action: Action) =
 			network.evaluateAndGetAllData(game, state, action, playerSide)
 
 	override fun receiveReward(reward: Float)
@@ -62,17 +70,19 @@ class DQNAgent<ND : DQNetwork.Data>(private val playerSide: Player.Side,
 		currentReward = 0f
 	}
 
-	fun calculateLearningSamples(discountFactor: Float): List<LearningSample>
-	{
+	suspend fun calculateLearningSamples(discountFactor: Float) = coroutineScope {
 		var currentReward = 0f
-		return timestamps.reversed().flatMap { (evaluations, reward) ->
+		timestamps.reversed().map { (evaluations, reward) ->
 			currentReward *= discountFactor
 			currentReward += reward
 			logger.debug("Reward: $currentReward")
 			evaluations.map { evaluation ->
-				val errors = network.calculateErrors(reward = currentReward, output = evaluation.finalOutput)
-				LearningSample(evaluation, errors)
+				val capturedReward = currentReward
+				async {
+					val errors = network.calculateErrors(reward = capturedReward, output = evaluation.finalOutput)
+					LearningSample(evaluation, errors)
+				}
 			}
-		}.reversed()
+		}.reversed().flatten().map { it.await() }
 	}
 }

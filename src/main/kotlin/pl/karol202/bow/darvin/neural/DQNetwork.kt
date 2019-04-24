@@ -16,9 +16,9 @@ interface DQNetwork<D : DQNetwork.Data>
 
 	val data: D
 
-	fun evaluateAndGetAllData(game: Game, state: GameState, action: Action, side: Player.Side): Evaluation
+	suspend fun evaluateAndGetAllData(game: Game, state: GameState, action: Action, side: Player.Side): Evaluation
 
-	fun calculateErrors(reward: Float, output: Float): List<FloatArray>
+	suspend fun calculateErrors(reward: Float, output: Float): List<FloatArray>
 
-	fun learn(evaluation: Evaluation, allErrors: List<FloatArray>, learnRate: Float)
+	suspend fun learn(evaluation: Evaluation, allErrors: List<FloatArray>, learnRate: Float)
 }

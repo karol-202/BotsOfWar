@@ -33,7 +33,7 @@ class StandardGameManager<B : Bot<BD>, BD : Bot.Data>(private val coroutineScope
 	private var game: Game? = null
 	private val bots = mutableMapOf<Player.Side, B>()
 
-	override fun updateStateAndGetOrder(gameStateData: GameState.GameStateData): Order
+	override suspend fun updateStateAndGetOrder(gameStateData: GameState.GameStateData): Order
 	{
 		val game = getOrEndGame(gameStateData.gameId) ?: startNewGame(gameStateData)
 		return game.update(gameStateData)
@@ -68,7 +68,7 @@ class StandardGameManager<B : Bot<BD>, BD : Bot.Data>(private val coroutineScope
 		}
 	}
 
-	private fun Game.update(gameStateData: GameState.GameStateData): Order
+	private suspend fun Game.update(gameStateData: GameState.GameStateData): Order
 	{
 		updateState(gameStateData)
 		gameListener?.onUpdate(gameStateData.currentTurn)

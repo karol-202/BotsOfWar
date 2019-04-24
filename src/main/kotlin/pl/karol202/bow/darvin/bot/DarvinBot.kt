@@ -20,7 +20,7 @@ class DarvinBot<A : Agent<AD>, AD : Agent.Data>(val agent: A,
 	private val player get() = currentState.getPlayer(side)
 	private val enemyPlayer get() = currentState.getPlayer(side.opposite)
 
-	override fun play(game: Game, side: Player.Side): Order
+	override suspend fun play(game: Game, side: Player.Side): Order
 	{
 		initState(game, side)
 		receiveRewards(game.state, null)
@@ -48,7 +48,7 @@ class DarvinBot<A : Agent<AD>, AD : Agent.Data>(val agent: A,
 		agent.moveToNextTimestamp()
 	}
 
-	private fun playWithEntity(entityId: String): List<Action>
+	private suspend fun playWithEntity(entityId: String): List<Action>
 	{
 		val actions = mutableListOf<Action>()
 
@@ -64,7 +64,7 @@ class DarvinBot<A : Agent<AD>, AD : Agent.Data>(val agent: A,
 		return actions
 	}
 
-	private fun playOnceWithEntity(entity: Entity): Action?
+	private suspend fun playOnceWithEntity(entity: Entity): Action?
 	{
 		val possibilities = getPossibleMoves(entity) + getPossibleAttacks(entity) + getPossibleEntrenchment(entity)
 		val bestAction = possibilities.pickAction()
@@ -123,7 +123,7 @@ class DarvinBot<A : Agent<AD>, AD : Agent.Data>(val agent: A,
 			else emptyList()
 
 
-	private fun recruit(): Recruitment?
+	private suspend fun recruit(): Recruitment?
 	{
 		val recruitment = getPossibleRecruitments().pickAction()
 		return recruitment?.also { currentState = it.perform(currentState) }
@@ -135,5 +135,5 @@ class DarvinBot<A : Agent<AD>, AD : Agent.Data>(val agent: A,
 
 	private fun isBaseOccupied() = currentState.getEntitiesAt(player.base.position).isNotEmpty()
 
-	private fun <A : Action> List<A>.pickAction() = agent.pickAction(game, currentState, this)
+	private suspend fun <A : Action> List<A>.pickAction() = agent.pickAction(game, currentState, this)
 }

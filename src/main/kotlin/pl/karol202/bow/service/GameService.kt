@@ -1,7 +1,6 @@
 package pl.karol202.bow.service
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -54,7 +53,8 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 	 */
 
 	private val coroutineJob = Job()
-	private val coroutineScope = CoroutineScope(coroutineJob)
+	private val coroutineContext = coroutineJob + Dispatchers.Default
+	private val coroutineScope = CoroutineScope(coroutineContext)
 
 	private val logger: Logger = LoggerFactory.getLogger(javaClass)
 	private val gameManager = StandardGameManager(coroutineScope) { side -> createBotFromRandomData(side) }.apply {
@@ -63,7 +63,7 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 	var onGameEndListener: (() -> Unit)? = null
 
 	var params = dataService.loadGameServiceParams() ?: Params()
-		@Synchronized set(value)
+		set(value)
 		{
 			val oldParams = field
 			field = value
@@ -117,30 +117,29 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 
 	private fun createNetwork(data: AxonDQNetworkData) = AxonDQNetwork(data)
 
-	@Synchronized
 	fun updateStateAndGetOrder(gameState: GameState.GameStateData) =
-			measureTimeAndLog("Calculated response") { gameManager.updateStateAndGetOrder(gameState) }
+			measureTimeAndLog("Calculated response") {
+				runBlocking(coroutineContext) {
+					gameManager.updateStateAndGetOrder(gameState)
+				}
+			}
 
-	@Synchronized
 	override fun onGameStart()
 	{
 		logger.info("Game started")
 	}
 
-	@Synchronized
 	override fun onUpdate(turn: Int)
 	{
 		logger.info("Game updated (turn: $turn)")
 	}
 
-	@Synchronized
 	override fun onReset()
 	{
 		logger.warn("Game restarted without teaching")
 		busyBots = emptyMap()
 	}
 
-	@Synchronized
 	override fun onGameEnd(bots: List<DarvinBotWithDQNAgent>)
 	{
 		logger.info("Game ended")
@@ -151,8 +150,11 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 
 	private fun DarvinBotWithDQNAgent.calculateAndSaveSamples()
 	{
+		fun calculateSamplesBlocking() =
+				runBlocking(coroutineContext) { agent.calculateLearningSamples(discountFactor) }
+
 		val name = busyBots.entries.singleOrNull { it.value === this }?.key ?: throw IllegalStateException("Unknown bot")
-		val samples = agent.calculateLearningSamples(discountFactor)
+		val samples = calculateSamplesBlocking()
 		logger.debug("Calculated samples for $name")
 		saveSamples(samples, name)
 
@@ -175,8 +177,8 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 				dataService.saveSamples(samples, samplesDirectory, botName)
 			}
 
-	private fun saveBotData(botData: DarvinBotData, name: String) = measureTimeAndLog("Saved bot data") {
-		dataService.saveBot(botData, botsDirectory, name)
+	private fun saveBotData(botData: DarvinBotData, botName: String) = measureTimeAndLog("Saved bot data") {
+		dataService.saveBot(botData, botsDirectory, botName)
 	}
 
 	private fun reloadSamples()
@@ -194,7 +196,6 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 	// API FUNCTIONS
 
 	// Creates bot with network with weights randomly distributed between -randomRange to randomRange
-	@Synchronized
 	fun addNewBot(name: String, randomRange: Float): Boolean
 	{
 		if(botsData.containsKey(name) || name.isBlank()) return false
@@ -205,30 +206,34 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 		return true
 	}
 
-	@Synchronized
-	fun teach(learnRate: Float, samplesAmount: Int, botsNames: List<String>?)
-	{
-		fun DQNetwork<*>.teach(botName: String, samplesAmount: Int) = measureTimeAndLog("Taught network") {
+	fun teach(learnRate: Float, samplesAmount: Int, botsNames: List<String>?) = runBlocking {
+		suspend fun DQNetwork<*>.teach(botName: String, samplesAmount: Int) = measureTimeAndLogSuspend("Taught network") {
 			val samples = learningSamples[botName] ?: emptyList()
-			samples.shuffled().take(samplesAmount).forEach { sample ->
-				learn(sample.evaluation, sample.allErrors, learnRate)
-			}
+			samples.shuffled().take(samplesAmount).forEach { sample -> learn(sample.evaluation, sample.allErrors, learnRate) }
 		}
 
 		botsData = botsData.mapValues { (name, botData) ->
-			if(botsNames != null && name !in botsNames) return@mapValues botData
+			if(botsNames != null && name !in botsNames) return@mapValues CompletableDeferred(botData)
 			val agentData = botData.agentData
 			val networkData = agentData.networkData
 			val network = AxonDQNetwork(networkData)
-			network.teach(name, samplesAmount)
-			botData.copy(agentData = agentData.copy(networkData = network.data)).also { saveBotData(it, name) }
-		}
+			async {
+				network.teach(name, samplesAmount)
+				botData.copy(agentData = agentData.copy(networkData = network.data)).also { saveBotData(it, name) }
+			}
+		}.mapValues { (_, botDataDeferred) -> botDataDeferred.await() }
 	}
 
 	@PreDestroy
 	fun onDestroy() = coroutineJob.cancel()
 
 	private fun <T> measureTimeAndLog(message: String, block: () -> T): T
+	{
+		val startTime = System.currentTimeMillis()
+		return block().also { logger.debug("$message in ${System.currentTimeMillis() - startTime} ms") }
+	}
+
+	private suspend fun <T> measureTimeAndLogSuspend(message: String, block: suspend () -> T): T
 	{
 		val startTime = System.currentTimeMillis()
 		return block().also { logger.debug("$message in ${System.currentTimeMillis() - startTime} ms") }

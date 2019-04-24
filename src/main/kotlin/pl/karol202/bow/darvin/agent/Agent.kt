@@ -10,7 +10,7 @@ interface Agent<D : Agent.Data>
 
 	val data: D
 
-	fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
+	suspend fun <A : Action> pickAction(game: Game, state: GameState, actions: List<A>): A?
 
 	fun receiveReward(reward: Float)
 

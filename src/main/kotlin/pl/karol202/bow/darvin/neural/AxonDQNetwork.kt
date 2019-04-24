@@ -197,7 +197,7 @@ class AxonDQNetwork private constructor(private val network: ReinforcementNetwor
 
 	constructor(randomRange: FloatRange) : this(createNetworkRandomly(randomRange))
 
-	override fun evaluateAndGetAllData(game: Game, state: GameState, action: Action, side: Player.Side): DQNetwork.Evaluation
+	override suspend fun evaluateAndGetAllData(game: Game, state: GameState, action: Action, side: Player.Side): DQNetwork.Evaluation
 	{
 		val input = Inputs.transformToInputArray(game, state, action, side)
 		val outputs = network.calculateAndGetIntermediateOutputs(input)
@@ -205,10 +205,10 @@ class AxonDQNetwork private constructor(private val network: ReinforcementNetwor
 		return DQNetwork.Evaluation(input, outputs, finalOutput)
 	}
 
-	override fun calculateErrors(reward: Float, output: Float) =
+	override suspend fun calculateErrors(reward: Float, output: Float) =
 			network.backpropagateErrorAndGetIntermediateErrors(floatArrayOf(reward - output)) // Network has 1 output
 
-	override fun learn(evaluation: DQNetwork.Evaluation, allErrors: List<FloatArray>, learnRate: Float)
+	override suspend fun learn(evaluation: DQNetwork.Evaluation, allErrors: List<FloatArray>, learnRate: Float)
 	{
 		network.learn(evaluation.input, evaluation.allOutputs, allErrors, learnRate)
 	}

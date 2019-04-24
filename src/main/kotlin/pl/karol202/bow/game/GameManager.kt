@@ -5,5 +5,5 @@ import pl.karol202.bow.model.Order
 
 interface GameManager
 {
-	fun updateStateAndGetOrder(gameStateData: GameState.GameStateData): Order
+	suspend fun updateStateAndGetOrder(gameStateData: GameState.GameStateData): Order
 }
