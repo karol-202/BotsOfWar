@@ -50,7 +50,8 @@ class AdminController
 	              samplesDirectory: String?,
 	              allowBotDuplication: Boolean?,
 	              botBindingForPlayer1: String?, // Blank to reset
-	              botBindingForPlayer2: String?) // Blank to reset
+	              botBindingForPlayer2: String?, // Blank to reset
+	              collectSamples: Boolean?)
 	{
 		val oldGame = gameService.params
 
@@ -79,7 +80,8 @@ class AdminController
 		                                        botsDirectory ?: oldGame.botsDirectory,
 		                                        samplesDirectory ?: oldGame.samplesDirectory,
 		                                        allowBotDuplication ?: oldGame.allowBotDuplication,
-		                                        newBindings)
+		                                        newBindings,
+		                                        collectSamples ?: oldGame.collectSamples)
 	}
 
 	@GetMapping("/admin/botsNames")

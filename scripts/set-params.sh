@@ -164,6 +164,23 @@ do
             fi
             shift
             ;;
+        --bind9)
+            shift
+            echo "Bind9 is not supported yet, but I'm working on it"
+            ;;
+        --collect)
+            shift
+            if [ $# -gt 0 ]; then
+                if [ $1 == "true" ] || [ $1 == "false" ]; then
+                    data="$data&collectSamples=$1"
+                else
+                    echo "Invalid collect value: $1"
+                fi
+            else
+                echo "No collect specified"
+            fi
+            shift
+            ;;
         *)
             break
             ;;

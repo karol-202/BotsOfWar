@@ -42,7 +42,8 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 	                  val botsDirectory: String = "default",
 	                  val samplesDirectory: String = "default",
 	                  val allowBotDuplication: Boolean = false,
-	                  val botBindings: Map<Player.Side, String> = emptyMap())
+	                  val botBindings: Map<Player.Side, String> = emptyMap(),
+	                  val collectSamples: Boolean = true)
 
 	/*
 	GameService saves data in 3 forms:
@@ -85,6 +86,7 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 	private val samplesDirectory get() = params.samplesDirectory
 	private val allowBotDuplication get() = params.allowBotDuplication
 	private val botBindings get() = params.botBindings
+	private val collectSamples get() = params.collectSamples
 
 	val botsNames get() = botsData.map { it.key }
 	val samplesAmount get() = learningSamples.mapValues { (_, list) -> list.size }
@@ -143,7 +145,7 @@ class GameService @Autowired constructor(private val dataService: DataService) :
 	override fun onGameEnd(bots: List<DarvinBotWithDQNAgent>)
 	{
 		logger.info("Game ended")
-		bots.forEach { bot -> bot.calculateAndSaveSamples() }
+		if(collectSamples) bots.forEach { bot -> bot.calculateAndSaveSamples() }
 		busyBots = emptyMap()
 		onGameEndListener?.invoke()
 	}
